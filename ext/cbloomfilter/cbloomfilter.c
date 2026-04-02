@@ -11,6 +11,9 @@
 # define RSTRING_PTR(x) (RSTRING(x)->ptr)
 #endif
 
+/* Reuse the standard CRC table for consistent seeds */
+static unsigned int *seeds = crc_table;
+
 static VALUE cBloomFilter;
 
 struct BloomFilter {
@@ -22,6 +25,18 @@ struct BloomFilter {
     unsigned char *ptr; /* bits data */
     int bytes; /* size of byte data */
 };
+
+unsigned long djb2(unsigned char *str, int len) {
+    unsigned long hash = 5381;
+    unsigned char *c;
+    c = (unsigned char *) str;
+    while (len > 0) {
+        hash = ((hash << 5) ^ hash) ^ (*c);
+        --len;
+        ++c;
+    }
+    return hash;
+}
 
 void bits_free(struct BloomFilter *bf) {
     ruby_xfree(bf->ptr);
@@ -44,7 +59,6 @@ void bucket_unset(struct BloomFilter *bf, int index) {
         bf->ptr[byte_offset] = c & ((1 << 8) - 1);
         bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
     }
-
 }
 
 void bucket_set(struct BloomFilter *bf, int index) {
@@ -194,7 +208,7 @@ static VALUE bf_set_bits(VALUE self){
 
 static VALUE bf_insert(VALUE self, VALUE key) {
     VALUE skey;
-    int index, seed;
+    unsigned long hash, index;
     int i, len, m, k, s;
     char *ckey;
     struct BloomFilter *bf;
@@ -208,12 +222,9 @@ static VALUE bf_insert(VALUE self, VALUE key) {
     k = bf->k;
     s = bf->s;
 
+    hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        /* seeds for hash functions */
-        seed = i + s;
-
-        /* hash */
-        index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
         /*  set a bit at the index */
         bucket_set(bf, index);
@@ -278,7 +289,7 @@ static VALUE bf_or(VALUE self, VALUE other) {
 }
 
 static VALUE bf_delete(VALUE self, VALUE key) {
-    int index, seed;
+    unsigned long hash, index;
     int i, len, m, k, s;
     char *ckey;
     VALUE skey;
@@ -293,12 +304,9 @@ static VALUE bf_delete(VALUE self, VALUE key) {
     k = bf->k;
     s = bf->s;
 
+    hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        /* seeds for hash functions */
-        seed = i + s;
-
-        /* hash */
-        index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
         /*  set a bit at the index */
         bucket_unset(bf, index);
@@ -309,7 +317,7 @@ static VALUE bf_delete(VALUE self, VALUE key) {
 
 
 static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
-    int index, seed;
+    unsigned long hash, index;
     int i, len, m, k, s, tests_idx, vlen;
     char *ckey;
     VALUE tests, key, skey;
@@ -329,12 +337,9 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
       k = bf->k;
       s = bf->s;
 
+      hash = (unsigned long) djb2(ckey, len);
       for (i = 0; i <= k - 1; i++) {
-          /* seeds for hash functions */
-          seed = i + s;
-
-          /* hash */
-          index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+          index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
           /* check the bit at the index */
           if (!bucket_check(bf, index)) {
@@ -344,7 +349,6 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
       return Qtrue;
     }
-
 }
 
 static VALUE bf_to_s(VALUE self) {
@@ -371,7 +375,7 @@ static VALUE bf_bitmap(VALUE self) {
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(str);
 
     memcpy(ptr, bf->ptr, bf->bytes);
-    
+
     return str;
 }
 
@@ -380,7 +384,7 @@ static VALUE bf_load(VALUE self, VALUE bitmap) {
     Data_Get_Struct(self, struct BloomFilter, bf);
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(bitmap);
 
-    memcpy(bf->ptr, ptr, bf->bytes);    
+    memcpy(bf->ptr, ptr, bf->bytes);
 
     return Qnil;
 }

@@ -4,7 +4,7 @@
 - Redis-backed getbit/setbit non-counting bloom filter
 - Redis-backed set-based counting (+TTL) bloom filter
 
-Bloom filter is a space-efficient probabilistic data structure that is used to test whether an element is a member of a set. False positives are possible, but false negatives are not. For more detail, check the [wikipedia article](http://en.wikipedia.org/wiki/Bloom_filter). Instead of using k different hash functions, this implementation seeds the CRC32 hash with k different initial values (0, 1, ..., k-1). This may or may not give you a good distribution, it all depends on the data.
+Bloom filter is a space-efficient probabilistic data structure that is used to test whether an element is a member of a set. False positives are possible, but false negatives are not. For more detail, check the [wikipedia article](http://en.wikipedia.org/wiki/Bloom_filter). Instead of using k different hash functions, this implementation a DJB2 hash with k seeds from the CRC table. This may or may not give you a good distribution, it all depends on the data.
 
 Performance of the Bloom filter depends on a number of variables:
 
