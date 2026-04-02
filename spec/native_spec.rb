@@ -3,7 +3,7 @@ require 'helper'
 describe BloomFilter::Native do
 
   it "should clear" do
-    bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :seed => 1, :bucket => 3, :raise => false)
+    bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
     bf.insert("test")
     expect(bf.include?("test")).to be true
     bf.clear
@@ -11,8 +11,8 @@ describe BloomFilter::Native do
   end
 
   it "should merge" do
-    bf1 = BloomFilter::Native.new(:size => 100, :hashes => 2, :seed => 1, :bucket => 3, :raise => false)
-    bf2 = BloomFilter::Native.new(:size => 100, :hashes => 2, :seed => 1, :bucket => 3, :raise => false)
+    bf1 = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf2 = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
     bf2.insert("test")
     expect(bf1.include?("test")).to be false
     bf1.merge!(bf2)
@@ -22,7 +22,7 @@ describe BloomFilter::Native do
 
   context "behave like a bloomfilter" do
     it "should test set membership" do
-      bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :seed => 1, :bucket => 3, :raise => false)
+      bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
       bf.insert("test")
       bf.insert("test1")
 
@@ -54,11 +54,11 @@ describe BloomFilter::Native do
     end
 
     it "should return intersection with other filter" do
-      bf1 = BloomFilter::Native.new(:seed => 1)
+      bf1 = BloomFilter::Native.new
       bf1.insert("test")
       bf1.insert("test1")
 
-      bf2 = BloomFilter::Native.new(:seed => 1)
+      bf2 = BloomFilter::Native.new
       bf2.insert("test")
       bf2.insert("test2")
 
@@ -79,11 +79,11 @@ describe BloomFilter::Native do
     end
 
     it "should return union with other filter" do
-      bf1 = BloomFilter::Native.new(:seed => 1)
+      bf1 = BloomFilter::Native.new
       bf1.insert("test")
       bf1.insert("test1")
 
-      bf2 = BloomFilter::Native.new(:seed => 1)
+      bf2 = BloomFilter::Native.new
       bf2.insert("test")
       bf2.insert("test2")
 

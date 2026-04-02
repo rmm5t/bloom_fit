@@ -1,25 +1,23 @@
 module BloomFilter
   BloomFilter::ConfigurationMismatch = Class.new(ArgumentError)
-  
+
   class Native < Filter
     attr_reader :bf
-    
+
     def initialize(opts = {})
       @opts = {
         :size    => 100,
         :hashes  => 4,
-        :seed    => Time.now.to_i,
         :bucket  => 3,
         :raise   => false
       }.merge(opts)
 
       # arg 1: m => size : number of buckets in a bloom filter
       # arg 2: k => hashes : number of hash functions
-      # arg 3: s => seed : seed of hash functions
-      # arg 4: b => bucket : number of bits in a bloom filter bucket
-      # arg 5: r => raise : raise on bucket overflow?
+      # arg 3: b => bucket : number of bits in a bloom filter bucket
+      # arg 4: r => raise : raise on bucket overflow?
 
-      @bf = CBloomFilter.new(@opts[:size], @opts[:hashes], @opts[:seed], @opts[:bucket], @opts[:raise])
+      @bf = CBloomFilter.new(@opts[:size], @opts[:hashes], @opts[:bucket], @opts[:raise])
     end
 
     def insert(key)
@@ -93,8 +91,7 @@ module BloomFilter
     # Returns true if parameters of the +o+ther filter are
     # the same.
     def same_parameters?(o)
-      @bf.m == o.bf.m && @bf.k == o.bf.k &&
-        @bf.s == o.bf.s && @bf.b == o.bf.b
+      @bf.m == o.bf.m && @bf.k == o.bf.k && @bf.b == o.bf.b
     end
 
   end

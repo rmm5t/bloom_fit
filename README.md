@@ -26,7 +26,7 @@ MRI/C implementation which creates an in-memory filter which can be saved and re
 ```ruby
 require 'bloomfilter-rb'
 
-bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :seed => 1, :bucket => 3, :raise => false)
+bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
 bf.insert("test")
 bf.include?("test")     # => true
 bf.include?("blah")     # => false
