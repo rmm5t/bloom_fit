@@ -12,10 +12,11 @@ Gem::Specification.new do |s|
   s.summary     = "Counting Bloom Filter implemented in Ruby"
   s.description = s.summary
 
+  s.add_development_dependency "irb"
   s.add_development_dependency "redis"
   s.add_development_dependency "rspec", ">= 3"
   s.add_development_dependency "rake"
-  s.add_development_dependency "rake-compiler" 
+  s.add_development_dependency "rake-compiler"
 
   s.extensions = ["ext/cbloomfilter/extconf.rb"]
 
