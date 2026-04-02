@@ -9,3 +9,6 @@ Rake::ExtensionTask.new('cbloomfilter')
 RSpec::Core::RakeTask.new(:spec)
 Rake::Task[:spec].prerequisites << :clean
 Rake::Task[:spec].prerequisites << :compile
+
+desc "Default: run unit tests."
+task default: :spec
