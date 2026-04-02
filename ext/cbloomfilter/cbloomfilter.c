@@ -11,17 +11,31 @@
 # define RSTRING_PTR(x) (RSTRING(x)->ptr)
 #endif
 
+/* Reuse the standard CRC table for consistent seeds */
+static unsigned int *seeds = crc_table;
+
 static VALUE cBloomFilter;
 
 struct BloomFilter {
     int m; /* # of buckets in a bloom filter */
     int b; /* # of bits in a bloom filter bucket */
     int k; /* # of hash functions */
-    int s; /* # seed of hash functions */
     int r; /* # raise on bucket overflow? */
     unsigned char *ptr; /* bits data */
     int bytes; /* size of byte data */
 };
+
+unsigned long djb2(unsigned char *str, int len) {
+    unsigned long hash = 5381;
+    unsigned char *c;
+    c = (unsigned char *) str;
+    while (len > 0) {
+        hash = ((hash << 5) ^ hash) ^ (*c);
+        --len;
+        ++c;
+    }
+    return hash;
+}
 
 void bits_free(struct BloomFilter *bf) {
     ruby_xfree(bf->ptr);
@@ -44,7 +58,6 @@ void bucket_unset(struct BloomFilter *bf, int index) {
         bf->ptr[byte_offset] = c & ((1 << 8) - 1);
         bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
     }
-
 }
 
 void bucket_set(struct BloomFilter *bf, int index) {
@@ -84,7 +97,7 @@ int bucket_get(struct BloomFilter *bf, int index) {
 
 static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
-    VALUE arg1, arg2, arg3, arg4, arg5, obj;
+    VALUE arg1, arg2, arg3, arg4, obj;
     int m, k, s, b, r, bytes;
 
     obj = Data_Make_Struct(self, struct BloomFilter, NULL, bits_free, bf);
@@ -92,17 +105,14 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     /* default = Fugou approach :-) */
     arg1 = INT2FIX(100000000);
     arg2 = INT2FIX(4);
-    arg3 = INT2FIX(0);
-    arg4 = INT2FIX(1);
-    arg5 = INT2FIX(0);
+    arg3 = INT2FIX(1);
+    arg4 = INT2FIX(0);
 
     switch (argc) {
-        case 5:
-      if (argv[4] == Qtrue) {
-        arg5 = INT2FIX(1);
-      }
         case 4:
-      arg4 = argv[3];
+      if (argv[3] == Qtrue) {
+        arg4 = INT2FIX(1);
+      }
         case 3:
       arg3 = argv[2];
         case 2:
@@ -114,9 +124,8 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
 
     m = FIX2INT(arg1);
     k = FIX2INT(arg2);
-    s = FIX2INT(arg3);
-    b = FIX2INT(arg4);
-    r = FIX2INT(arg5);
+    b = FIX2INT(arg3);
+    r = FIX2INT(arg4);
 
     if (b < 1 || b > 8)
         rb_raise(rb_eArgError, "bucket size");
@@ -124,13 +133,10 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
         rb_raise(rb_eArgError, "array size");
     if (k < 1)
         rb_raise(rb_eArgError, "hash length");
-    if (s < 0)
-        rb_raise(rb_eArgError, "random seed");
 
     bf->b = b;
     bf->m = m;
     bf->k = k;
-    bf->s = s;
     bf->r = r;
 
     bf->bytes = ((m * b) + 15) / 8;
@@ -174,12 +180,6 @@ static VALUE bf_r(VALUE self) {
     return bf->r == 0 ? Qfalse : Qtrue;
 }
 
-static VALUE bf_s(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    return INT2FIX(bf->s);
-}
-
 static VALUE bf_set_bits(VALUE self){
     struct BloomFilter *bf;
     int i,j,count = 0;
@@ -194,8 +194,8 @@ static VALUE bf_set_bits(VALUE self){
 
 static VALUE bf_insert(VALUE self, VALUE key) {
     VALUE skey;
-    int index, seed;
-    int i, len, m, k, s;
+    unsigned long hash, index;
+    int i, len, m, k;
     char *ckey;
     struct BloomFilter *bf;
     Data_Get_Struct(self, struct BloomFilter, bf);
@@ -206,14 +206,10 @@ static VALUE bf_insert(VALUE self, VALUE key) {
 
     m = bf->m;
     k = bf->k;
-    s = bf->s;
 
+    hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        /* seeds for hash functions */
-        seed = i + s;
-
-        /* hash */
-        index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
         /*  set a bit at the index */
         bucket_set(bf, index);
@@ -242,11 +238,10 @@ static VALUE bf_and(VALUE self, VALUE other) {
     Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
-    args[2] = INT2FIX(bf->s);
-    args[3] = INT2FIX(bf->b);
-    args[4] = INT2FIX(bf->r);
+    args[2] = INT2FIX(bf->b);
+    args[3] = INT2FIX(bf->r);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(5,args,klass);
+    obj = bf_s_new(4,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] & bf_other->ptr[i];
@@ -264,11 +259,10 @@ static VALUE bf_or(VALUE self, VALUE other) {
     Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
-    args[2] = INT2FIX(bf->s);
-    args[3] = INT2FIX(bf->b);
-    args[4] = INT2FIX(bf->r);
+    args[2] = INT2FIX(bf->b);
+    args[3] = INT2FIX(bf->r);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(5,args,klass);
+    obj = bf_s_new(4,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] | bf_other->ptr[i];
@@ -278,8 +272,8 @@ static VALUE bf_or(VALUE self, VALUE other) {
 }
 
 static VALUE bf_delete(VALUE self, VALUE key) {
-    int index, seed;
-    int i, len, m, k, s;
+    unsigned long hash, index;
+    int i, len, m, k;
     char *ckey;
     VALUE skey;
     struct BloomFilter *bf;
@@ -291,14 +285,10 @@ static VALUE bf_delete(VALUE self, VALUE key) {
 
     m = bf->m;
     k = bf->k;
-    s = bf->s;
 
+    hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        /* seeds for hash functions */
-        seed = i + s;
-
-        /* hash */
-        index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
         /*  set a bit at the index */
         bucket_unset(bf, index);
@@ -309,8 +299,8 @@ static VALUE bf_delete(VALUE self, VALUE key) {
 
 
 static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
-    int index, seed;
-    int i, len, m, k, s, tests_idx, vlen;
+    unsigned long hash, index;
+    int i, len, m, k, tests_idx, vlen;
     char *ckey;
     VALUE tests, key, skey;
     struct BloomFilter *bf;
@@ -327,14 +317,10 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
       m = bf->m;
       k = bf->k;
-      s = bf->s;
 
+      hash = (unsigned long) djb2(ckey, len);
       for (i = 0; i <= k - 1; i++) {
-          /* seeds for hash functions */
-          seed = i + s;
-
-          /* hash */
-          index = (int) (crc32((unsigned int) (seed), ckey, len) % (unsigned int) (m));
+          index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
 
           /* check the bit at the index */
           if (!bucket_check(bf, index)) {
@@ -344,7 +330,6 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
       return Qtrue;
     }
-
 }
 
 static VALUE bf_to_s(VALUE self) {
@@ -371,7 +356,7 @@ static VALUE bf_bitmap(VALUE self) {
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(str);
 
     memcpy(ptr, bf->ptr, bf->bytes);
-    
+
     return str;
 }
 
@@ -380,7 +365,7 @@ static VALUE bf_load(VALUE self, VALUE bitmap) {
     Data_Get_Struct(self, struct BloomFilter, bf);
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(bitmap);
 
-    memcpy(bf->ptr, ptr, bf->bytes);    
+    memcpy(bf->ptr, ptr, bf->bytes);
 
     return Qnil;
 }
@@ -393,7 +378,7 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "b", bf_b, 0);
     rb_define_method(cBloomFilter, "r", bf_r, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
-    rb_define_method(cBloomFilter, "s", bf_s, 0);
+    /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "insert", bf_insert, 1);
     rb_define_method(cBloomFilter, "delete", bf_delete, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, -1);
