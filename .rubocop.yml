@@ -1,0 +1,7 @@
+inherit_gem:
+  rubocop-pragmatic:
+    - ruby.yml
+    - rubocop-rspec.yml
+
+Minitest:
+  Enabled: false
