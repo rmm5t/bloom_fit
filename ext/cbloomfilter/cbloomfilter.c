@@ -98,7 +98,7 @@ int bucket_get(struct BloomFilter *bf, int index) {
 static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2, arg3, arg4, obj;
-    int m, k, s, b, r, bytes;
+    int m, k, b, r;
 
     obj = Data_Make_Struct(self, struct BloomFilter, NULL, bits_free, bf);
 
