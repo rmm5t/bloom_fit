@@ -1,32 +1,45 @@
-$:<< 'lib'
+$:<< "lib"
 
-require 'benchmark'
-require 'bloomfit'
+require "benchmark"
+require "bloom_fit"
+require "securerandom"
 
-n = 10000
+n = 100_000
+c = 0
 
 Benchmark.bm do |x|
-  r = BloomFit.new
+  bf = BloomFit.new(size: 1_900_000, hashes: 13)
+  bf.insert("exists")
 
   x.report("insert") do
     n.times do
-      r.insert("a")
+      bf.insert("exists")
     end
   end
 
   x.report("lookup present") do
     n.times do
-      r.include?("a")
+      bf.include?("exists")
     end
   end
 
   x.report("lookup missing") do
     n.times do
-      r.include?("b")
+      bf.include?("missing")
     end
   end
 
+  x.report("false-positive check") do
+    n.times do
+      bf.insert(SecureRandom.uuid)
+    end
+    n.times do
+      c += 1 if bf.include?(SecureRandom.uuid)
+    end
+  end
 end
+
+printf "false-positive rate:  %.4f\n", (c.to_f / n.to_f)
 
 #       user     system      total        real
 # insert  1.000000   0.380000   1.380000 (  1.942181)
