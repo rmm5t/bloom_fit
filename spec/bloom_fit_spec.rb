@@ -37,7 +37,7 @@ describe BloomFit do
 
       expect(subject.include?("test")).to be true
       expect(subject.include?("abcd")).to be false
-      expect(subject.include?("test", "test1", '12345')).to be true
+      expect(subject.include?("test", "test1", "12345")).to be true
     end
 
     it "should return the number of bits set to 1" do
@@ -101,28 +101,28 @@ describe BloomFit do
     end
 
     it "should output current stats" do
-      subject.insert('test')
+      subject.insert("test")
       expect { subject.stats }.not_to raise_error
     end
   end
 
   context "serialize" do
-    after(:each) { File.unlink('bf.out') }
+    after(:each) { File.unlink("bf.out") }
 
     it "should marshall" do
       bf = BloomFit.new
-      expect { bf.save('bf.out') }.not_to raise_error
+      expect { bf.save("bf.out") }.not_to raise_error
     end
 
     it "should load from marshalled" do
-      subject.insert('foo')
-      subject.insert('bar')
-      subject.save('bf.out')
+      subject.insert("foo")
+      subject.insert("bar")
+      subject.save("bf.out")
 
-      bf2 = BloomFit.load('bf.out')
-      expect(bf2.include?('foo')).to be true
-      expect(bf2.include?('bar')).to be true
-      expect(bf2.include?('baz')).to be false
+      bf2 = BloomFit.load("bf.out")
+      expect(bf2.include?("foo")).to be true
+      expect(bf2.include?("bar")).to be true
+      expect(bf2.include?("baz")).to be false
 
       expect(subject.send(:same_parameters?, bf2)).to be true
     end

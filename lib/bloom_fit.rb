@@ -1,5 +1,5 @@
-require 'cbloomfilter'
-require 'bloom_fit/version'
+require "cbloomfilter"
+require "bloom_fit/version"
 
 class BloomFit
   BloomFit::ConfigurationMismatch = Class.new(ArgumentError)
@@ -73,11 +73,11 @@ class BloomFit
   end
 
   def self.load(filename)
-    Marshal.load(File.open(filename, 'r'))
+    Marshal.load(File.open(filename, "r"))
   end
 
   def save(filename)
-    File.open(filename, 'w') do |f|
+    File.open(filename, "w") do |f|
       f << Marshal.dump(self)
     end
   end

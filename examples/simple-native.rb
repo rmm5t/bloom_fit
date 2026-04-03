@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require 'bloom_fit'
+require "bloom_fit"
 
 WORDS = %w(duck penguin bear panda)
 TEST = %w(penguin moose racooon)
