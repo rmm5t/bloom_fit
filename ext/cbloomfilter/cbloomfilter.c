@@ -82,16 +82,6 @@ int bucket_check(struct BloomFilter *bf, int index) {
     return (c & mask) >> bit_offset;
 }
 
-int bucket_get(struct BloomFilter *bf, int index) {
-    int byte_offset = (index * bf->b) / 8;
-    int bit_offset = (index * bf->b) % 8;
-    unsigned int c = bf->ptr[byte_offset];
-    c += bf->ptr[byte_offset + 1] << 8;
-
-    unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
-    return (c & mask) >> bit_offset;
-}
-
 static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2, arg3, arg4, obj;
@@ -286,7 +276,7 @@ static VALUE bf_to_s(VALUE self) {
 
     ptr = (unsigned char *) RSTRING_PTR(str);
     for (i = 0; i < bf->m; i++)
-        *ptr++ = bucket_get(bf, i) ? '1' : '0';
+        *ptr++ = bucket_check(bf, i) ? '1' : '0';
 
     return str;
 }
