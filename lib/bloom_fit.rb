@@ -31,7 +31,7 @@ class BloomFit
 
   def clear = @bf.clear
   def size = @bf.set_bits
-  def merge!(o) = @bf.merge!(o.bf)
+  def merge!(other) = @bf.merge!(other.bf)
 
   # Returns the number of bits that are set to 1 in the filter.
   def set_bits
@@ -41,20 +41,20 @@ class BloomFit
   # Computes the intersection of two Bloom filters.
   # It assumes that both filters have the same size -
   # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
-  def &(o)
-    raise BloomFit::ConfigurationMismatch unless same_parameters?(o)
+  def &(other)
+    raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
     result = self.class.new
-    result.instance_variable_set(:@bf,@bf.&(o.bf))
+    result.instance_variable_set(:@bf, @bf.&(other.bf))
     result
   end
 
   # Computes the union of two Bloom filters.
   # It assumes that both filters have the same size -
   # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
-  def |(o)
-    raise BloomFit::ConfigurationMismatch unless same_parameters?(o)
+  def |(other)
+    raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
     result = self.class.new
-    result.instance_variable_set(:@bf,@bf.|(o.bf))
+    result.instance_variable_set(:@bf, @bf.|(other.bf))
     result
   end
 
