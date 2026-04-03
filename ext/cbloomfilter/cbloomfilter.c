@@ -26,12 +26,8 @@ struct BloomFilter {
 
 unsigned long djb2(const char *str, int len) {
     unsigned long hash = 5381;
-    const unsigned char *c;
-    c = (const unsigned char *) str;
-    while (len > 0) {
-        hash = ((hash << 5) ^ hash) ^ (*c);
-        --len;
-        ++c;
+    for (int i = 0; i < len; i++) {
+        hash = ((hash << 5) ^ hash) ^ str[i];
     }
     return hash;
 }
