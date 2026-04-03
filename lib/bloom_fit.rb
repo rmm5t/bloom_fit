@@ -13,8 +13,6 @@ class BloomFit
 
     # arg 1: m => size : number of buckets in a bloom filter
     # arg 2: k => hashes : number of hash functions
-    # arg 3: b => bucket : number of bits per bucket
-    # arg 4: r => raise : whether to raise on bucket overflow
     @bf = CBloomFilter.new(@size, @hashes)
   end
 

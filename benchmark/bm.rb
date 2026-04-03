@@ -10,7 +10,7 @@ c = 0
 Benchmark.bm do |x|
   # Expecting 0.0001 false-positive
   # See: https://hur.st/bloomfilter/?n=1000000&p=.0001&m=&k=
-  bf = BloomFit.new(size: 19_000_000, hashes: 13)
+  bf = BloomFit.new(size: 19_170_117, hashes: 14)
   bf.insert("exists")
 
   x.report("insert") do
@@ -33,7 +33,7 @@ Benchmark.bm do |x|
 
   x.report("false-positive check") do
     n.times do
-      bf.insert(SecureRandom.uuid)
+      bf.insert(SecureRandom.uuid * rand(10))
     end
     n.times do
       c += 1 if bf.include?(SecureRandom.uuid)
@@ -43,7 +43,7 @@ end
 
 puts
 puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.4f\n", (c.to_f / n)
+printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
 
 #                           user     system      total        real
 # insert                0.059581   0.000363   0.059944 (  0.059973)
