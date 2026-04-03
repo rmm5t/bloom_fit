@@ -40,11 +40,11 @@ bf["bird"] = "bar"
 bf["bird"]             # => true
 bf["mouse"]            # => false
 
-bf.stats
-# => Number of filter bits (m): 3600
-# => Number of set bits (n): 20
-# => Number of filter hashes (k) : 10
-# => Predicted false positive rate = 0.00%
+puts bf.stats
+# Number of filter bits (m): 3600
+# Number of set bits (n): 20
+# Number of filter hashes (k) : 10
+# Predicted false positive rate = 0.00%
 ```
 
 If you'd like more control over the traditional inputs like bit size and the number of hashes:
@@ -62,11 +62,11 @@ bf["bird"] = "bar"
 bf["bird"]             # => true
 bf["mouse"]            # => false
 
-bf.stats
-# => Number of filter bits (m): 100
-# => Number of set bits (n): 4
-# => Number of filter hashes (k) : 2
-# => Predicted false positive rate = 10.87%
+puts bf.stats
+# Number of filter bits (m): 100
+# Number of set bits (n): 4
+# Number of filter hashes (k) : 2
+# Predicted false positive rate = 10.87%
 ```
 
 ## Credits

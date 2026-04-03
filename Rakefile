@@ -1,12 +1,16 @@
 require "bundler/gem_tasks"
 require "bundler/setup"
-require "rspec/core/rake_task"
 require "rake/extensiontask"
+require "rake/testtask"
 
 Rake::ExtensionTask.new("cbloomfilter")
-RSpec::Core::RakeTask.new(:spec)
-Rake::Task[:spec].prerequisites << :clean
-Rake::Task[:spec].prerequisites << :compile
 
 desc "Default: run unit tests."
-task default: :spec
+task default: :test
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "test"
+  t.pattern = "test/**/*_test.rb"
+end
+
+task test: [:clean, :compile]

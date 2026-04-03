@@ -82,11 +82,14 @@ class BloomFit
   end
 
   def stats
-    fp = ((1.0 - Math.exp(-(@hashes * size).to_f / @size))**@hashes) * 100
-    printf "Number of filter buckets (m): %d\n", @size
-    printf "Number of set bits (n): %d\n", set_bits
-    printf "Number of filter hashes (k) : %d\n", @hashes
-    printf "Predicted false positive rate = %.2f%%\n", fp
+    fpr = ((1.0 - Math.exp(-(@hashes * size).to_f / @size))**@hashes) * 100
+
+    "".tap do |s|
+      s << format("Number of filter buckets (m):  %d\n",     @size)
+      s << format("Number of set bits (n):        %d\n",     set_bits)
+      s << format("Number of filter hashes (k):   %d\n",     @hashes)
+      s << format("Predicted false positive rate: %.2f%%\n", fpr)
+    end
   end
 
   protected
