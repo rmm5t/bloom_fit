@@ -8,6 +8,8 @@ n = 1_000_000
 c = 0
 
 Benchmark.bm do |x|
+  # Expecting 0.0001 false-positive
+  # See: https://hur.st/bloomfilter/?n=1000000&p=.0001&m=&k=
   bf = BloomFit.new(size: 19_000_000, hashes: 13)
   bf.insert("exists")
 
@@ -39,11 +41,15 @@ Benchmark.bm do |x|
   end
 end
 
-printf "false-positive rate:  %.4f\n", (c.to_f / n)
+puts
+puts   "expected false-positive rate:  0.0001"
+printf "actual false-positive rate:    %.4f\n", (c.to_f / n)
 
 #                           user     system      total        real
-# insert                0.006178   0.000063   0.006241 (  0.006244)
-# lookup present        0.009735   0.000039   0.009774 (  0.009795)
-# lookup missing        0.008206   0.000030   0.008236 (  0.008239)
-# false-positive check  0.127271   0.163654   0.290925 (  0.290971)
-# false-positive rate:  0.0001
+# insert                0.059581   0.000363   0.059944 (  0.059973)
+# lookup present        0.104014   0.000898   0.104912 (  0.104924)
+# lookup missing        0.092725   0.000854   0.093579 (  0.093591)
+# false-positive check  1.381140   1.695013   3.076153 (  3.077911)
+
+# expected false-positive rate:  0.0001
+# actual false-positive rate:    0.0001
