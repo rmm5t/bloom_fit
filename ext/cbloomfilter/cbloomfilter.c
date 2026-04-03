@@ -11,8 +11,8 @@
 # define RSTRING_PTR(x) (RSTRING(x)->ptr)
 #endif
 
-/* Reuse the standard CRC table for consistent seeds */
-static unsigned int *seeds = crc_table;
+/* Reuse the standard CRC table for consistent salts */
+static unsigned int *salts = crc_table;
 
 static VALUE cBloomFilter;
 
@@ -173,7 +173,7 @@ static VALUE bf_insert(VALUE self, VALUE key) {
 
     hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
+        index = (unsigned long) (hash ^ salts[i]) % (unsigned int) (m);
 
         /*  set a bit at the index */
         bucket_set(bf, index);
@@ -253,7 +253,7 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
       hash = (unsigned long) djb2(ckey, len);
       for (i = 0; i <= k - 1; i++) {
-          index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
+          index = (unsigned long) (hash ^ salts[i]) % (unsigned int) (m);
 
           /* check the bit at the index */
           if (!bucket_check(bf, index)) {
