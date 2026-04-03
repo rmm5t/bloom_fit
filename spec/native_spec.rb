@@ -102,6 +102,11 @@ describe BloomFilter::Native do
 
       expect {bf1 | bf2}.to raise_error(BloomFilter::ConfigurationMismatch)
     end
+
+    it "should output current stats" do
+      subject.insert('test')
+      expect { subject.stats }.not_to raise_error
+    end
   end
 
   context "behave like counting bloom filter" do
