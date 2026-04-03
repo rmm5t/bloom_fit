@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 require "bloom_fit"
 
-WORDS = %w(duck penguin bear panda)
-TEST = %w(penguin moose racooon)
+WORDS = %w(duck penguin bear panda).freeze
+TEST = %w(penguin moose racooon).freeze
 
 bf = BloomFit.new(size: 1000, hashes: 2)
 
