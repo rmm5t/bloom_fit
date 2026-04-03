@@ -4,11 +4,11 @@ require "benchmark"
 require "bloom_fit"
 require "securerandom"
 
-n = 100_000
+n = 1_000_000
 c = 0
 
 Benchmark.bm do |x|
-  bf = BloomFit.new(size: 1_900_000, hashes: 13)
+  bf = BloomFit.new(size: 19_000_000, hashes: 13)
   bf.insert("exists")
 
   x.report("insert") do
@@ -41,7 +41,9 @@ end
 
 printf "false-positive rate:  %.4f\n", (c.to_f / n)
 
-#       user     system      total        real
-# insert  1.000000   0.380000   1.380000 (  1.942181)
-# lookup present  1.030000   0.470000   1.500000 (  2.577577)
-# lookup missing  0.370000   0.160000   0.530000 (  1.060429)
+#                           user     system      total        real
+# insert                0.006178   0.000063   0.006241 (  0.006244)
+# lookup present        0.009735   0.000039   0.009774 (  0.009795)
+# lookup missing        0.008206   0.000030   0.008236 (  0.008239)
+# false-positive check  0.127271   0.163654   0.290925 (  0.290971)
+# false-positive rate:  0.0001
