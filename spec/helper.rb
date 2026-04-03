@@ -1,3 +1,2 @@
-require 'redis'
-require 'bundler/setup'
-require 'bloomfilter-rb'
+require "bundler/setup"
+require "bloom_fit"

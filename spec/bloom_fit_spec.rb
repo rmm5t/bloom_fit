@@ -1,9 +1,8 @@
-require 'helper'
+require "helper"
 
-describe BloomFilter::Native do
-
+describe BloomFit do
   it "should clear" do
-    bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
     bf.insert("test")
     expect(bf.include?("test")).to be true
     bf.clear
@@ -11,8 +10,8 @@ describe BloomFilter::Native do
   end
 
   it "should merge" do
-    bf1 = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
-    bf2 = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf1 = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf2 = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
     bf2.insert("test")
     expect(bf1.include?("test")).to be false
     bf1.merge!(bf2)
@@ -20,9 +19,9 @@ describe BloomFilter::Native do
     expect(bf2.include?("test")).to be true
   end
 
-  context "behave like a bloomfilter" do
+  context "behave like a bloom filter" do
     it "should test set membership" do
-      bf = BloomFilter::Native.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+      bf = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
       bf.insert("test")
       bf.insert("test1")
 
@@ -42,23 +41,23 @@ describe BloomFilter::Native do
     end
 
     it "should return the number of bits set to 1" do
-      bf = BloomFilter::Native.new(:hashes => 4)
+      bf = BloomFit.new(:hashes => 4)
       bf.insert("test")
       expect(bf.set_bits).to be == 4
       bf.delete("test")
       expect(bf.set_bits).to be == 0
 
-      bf = BloomFilter::Native.new(:hashes => 1)
+      bf = BloomFit.new(:hashes => 1)
       bf.insert("test")
       expect(bf.set_bits).to be == 1
     end
 
     it "should return intersection with other filter" do
-      bf1 = BloomFilter::Native.new
+      bf1 = BloomFit.new
       bf1.insert("test")
       bf1.insert("test1")
 
-      bf2 = BloomFilter::Native.new
+      bf2 = BloomFit.new
       bf2.insert("test")
       bf2.insert("test2")
 
@@ -69,21 +68,21 @@ describe BloomFilter::Native do
     end
 
     it "should raise an exception when intersection is to be computed for incompatible filters" do
-      bf1 = BloomFilter::Native.new(:size => 10)
+      bf1 = BloomFit.new(:size => 10)
       bf1.insert("test")
 
-      bf2 = BloomFilter::Native.new(:size => 20)
+      bf2 = BloomFit.new(:size => 20)
       bf2.insert("test")
 
-      expect { bf1 & bf2 }.to raise_error(BloomFilter::ConfigurationMismatch)
+      expect { bf1 & bf2 }.to raise_error(BloomFit::ConfigurationMismatch)
     end
 
     it "should return union with other filter" do
-      bf1 = BloomFilter::Native.new
+      bf1 = BloomFit.new
       bf1.insert("test")
       bf1.insert("test1")
 
-      bf2 = BloomFilter::Native.new
+      bf2 = BloomFit.new
       bf2.insert("test")
       bf2.insert("test2")
 
@@ -94,13 +93,13 @@ describe BloomFilter::Native do
     end
 
     it "should raise an exception when union is to be computed for incompatible filters" do
-      bf1 = BloomFilter::Native.new(:size => 10)
+      bf1 = BloomFit.new(:size => 10)
       bf1.insert("test")
 
-      bf2 = BloomFilter::Native.new(:size => 20)
+      bf2 = BloomFit.new(:size => 20)
       bf2.insert("test")
 
-      expect {bf1 | bf2}.to raise_error(BloomFilter::ConfigurationMismatch)
+      expect {bf1 | bf2}.to raise_error(BloomFit::ConfigurationMismatch)
     end
 
     it "should output current stats" do
@@ -122,17 +121,17 @@ describe BloomFilter::Native do
   context "serialize" do
     after(:each) { File.unlink('bf.out') }
 
-    it "should marshall the bloomfilter" do
-      bf = BloomFilter::Native.new
+    it "should marshall" do
+      bf = BloomFit.new
       expect { bf.save('bf.out') }.not_to raise_error
     end
 
-    it "should load marshalled bloomfilter" do
+    it "should load from marshalled" do
       subject.insert('foo')
       subject.insert('bar')
       subject.save('bf.out')
 
-      bf2 = BloomFilter::Native.load('bf.out')
+      bf2 = BloomFit.load('bf.out')
       expect(bf2.include?('foo')).to be true
       expect(bf2.include?('bar')).to be true
       expect(bf2.include?('baz')).to be false
@@ -143,12 +142,11 @@ describe BloomFilter::Native do
     it "should serialize to a file size proporational its bucket size" do
       fs_size = 0
       8.times do |i|
-        bf = BloomFilter::Native.new(size: 10_000, bucket: i+1)
+        bf = BloomFit.new(size: 10_000, bucket: i+1)
         bf.save('bf.out')
         prev_size, fs_size = fs_size, File.size('bf.out')
         expect(prev_size).to be < fs_size
       end
     end
-
   end
 end

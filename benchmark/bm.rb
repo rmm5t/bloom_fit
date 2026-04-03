@@ -1,12 +1,12 @@
 $:<< 'lib'
 
 require 'benchmark'
-require 'bloomfilter-rb'
+require 'bloomfit'
 
 n = 10000
 
 Benchmark.bm do |x|
-  r = BloomFilter::Redis.new
+  r = BloomFit.new
 
   x.report("insert") do
     n.times do
