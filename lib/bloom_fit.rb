@@ -42,7 +42,7 @@ class BloomFit
   # It assumes that both filters have the same size -
   # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
   def &(o)
-    raise BloomFit::ConfigurationMismatch.new unless same_parameters?(o)
+    raise BloomFit::ConfigurationMismatch unless same_parameters?(o)
     result = self.class.new
     result.instance_variable_set(:@bf,@bf.&(o.bf))
     result
@@ -52,7 +52,7 @@ class BloomFit
   # It assumes that both filters have the same size -
   # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
   def |(o)
-    raise BloomFit::ConfigurationMismatch.new unless same_parameters?(o)
+    raise BloomFit::ConfigurationMismatch unless same_parameters?(o)
     result = self.class.new
     result.instance_variable_set(:@bf,@bf.|(o.bf))
     result
