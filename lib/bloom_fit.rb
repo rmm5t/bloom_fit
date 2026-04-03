@@ -20,13 +20,13 @@ class BloomFit
   def insert(key)
     @bf.insert(key)
   end
-  alias :[]= :insert
+  alias []= insert
 
   def include?(*keys)
     @bf.include?(*keys)
   end
-  alias :key? :include?
-  alias :[] :include?
+  alias key? include?
+  alias [] include?
 
   def clear; @bf.clear; end
   def size; @bf.set_bits; end
