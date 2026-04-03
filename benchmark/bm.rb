@@ -4,15 +4,15 @@ require "benchmark"
 require "bloom_fit"
 require "securerandom"
 
-n = 1_000_000
+n = 100_000
 c = 0
 
-Benchmark.bm do |x|
-  # Expecting 0.0001 false-positive
-  # See: https://hur.st/bloomfilter/?n=1000000&p=.0001&m=&k=
-  bf = BloomFit.new(size: 19_170_117, hashes: 14)
-  bf.insert("exists")
+# Expecting 0.0001 false-positive
+# See: https://hur.st/bloomfilter/?n=100000&p=.0001&m=&k=
+bf = BloomFit.new(size: 1_917_012, hashes: 14)
+bf.insert("exists")
 
+Benchmark.bm do |x|
   x.report("insert") do
     n.times do
       bf.insert("exists")
@@ -30,26 +30,77 @@ Benchmark.bm do |x|
       bf.include?("missing")
     end
   end
-
-  x.report("false-positive check") do
-    n.times do
-      bf.insert(SecureRandom.uuid * rand(10))
-    end
-    n.times do
-      c += 1 if bf.include?(SecureRandom.uuid)
-    end
-  end
 end
 
 puts
+puts "false-positive checks - constant adds; constant checks:"
+bf.clear
+c = 0
+n.times do
+  bf.insert(Random.alphanumeric(64))
+end
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(64))
+end
 puts   "expected false-positive rate:  0.0001"
 printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
 
-#                           user     system      total        real
-# insert                0.059581   0.000363   0.059944 (  0.059973)
-# lookup present        0.104014   0.000898   0.104912 (  0.104924)
-# lookup missing        0.092725   0.000854   0.093579 (  0.093591)
-# false-positive check  1.381140   1.695013   3.076153 (  3.077911)
+# ----------------------------------------
 
-# expected false-positive rate:  0.0001
-# actual false-positive rate:    0.0001
+puts
+puts "false-positive checks - variable adds; constant checks:"
+bf.clear
+c = 0
+n.times do
+  bf.insert(Random.alphanumeric(rand(20..512)))
+end
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(64))
+end
+puts   "expected false-positive rate:  0.0001"
+printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+
+# ----------------------------------------
+
+puts
+puts "false-positive checks - constant adds and variable checks:"
+bf.clear
+c = 0
+n.times do
+  bf.insert(Random.alphanumeric(64))
+end
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
+end
+puts   "expected false-positive rate:  0.0001"
+printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+
+# ----------------------------------------
+
+puts
+puts "false-positive checks - variable adds; variable checks:"
+bf.clear
+c = 0
+n.times do
+  bf.insert(Random.alphanumeric(rand(20..512)))
+end
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
+end
+puts   "expected false-positive rate:  0.0001"
+printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+
+# # ----------------------------------------
+
+puts
+puts "false-positive checks - 8x uuid adds; 8x uuid checks:"
+bf.clear
+c = 0
+n.times do
+  bf.insert(Random.uuid * 8)
+end
+n.times do
+  c += 1 if bf.include?(Random.uuid * 8)
+end
+puts   "expected false-positive rate:  0.0001"
+printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
