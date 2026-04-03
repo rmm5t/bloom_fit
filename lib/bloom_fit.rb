@@ -14,7 +14,7 @@ class BloomFit
     # arg 2: k => hashes : number of hash functions
     # arg 3: b => bucket : number of bits per bucket
     # arg 4: r => raise : whether to raise on bucket overflow
-    @bf = CBloomFilter.new(@size, @hashes, 1, false)
+    @bf = CBloomFilter.new(@size, @hashes, 1)
   end
 
   def insert(key)

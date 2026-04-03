@@ -41,11 +41,11 @@ describe BloomFit do
     end
 
     it "should return the number of bits set to 1" do
-      bf = BloomFit.new(:hashes => 4)
+      bf = BloomFit.new(hashes: 4)
       bf.insert("test")
       expect(bf.set_bits).to be == 4
 
-      bf = BloomFit.new(:hashes => 1)
+      bf = BloomFit.new(hashes: 1)
       bf.insert("test")
       expect(bf.set_bits).to be == 1
     end

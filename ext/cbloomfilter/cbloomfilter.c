@@ -20,7 +20,6 @@ struct BloomFilter {
     int m; /* # of buckets in a bloom filter */
     int b; /* # of bits in a bloom filter bucket */
     int k; /* # of hash functions */
-    int r; /* # raise on bucket overflow? */
     unsigned char *ptr; /* bits data */
     int bytes; /* size of byte data */
 };
@@ -66,9 +65,7 @@ void bucket_set(struct BloomFilter *bf, int index) {
     unsigned int c = bf->ptr[byte_offset];
     c += bf->ptr[byte_offset + 1] << 8;
     unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
-    if ((c & mask) == mask) {
-        if (bf->r == 1) rb_raise(rb_eRuntimeError, "bucket got filled up");
-    } else {
+    if ((c & mask) != mask) {
         c = c + ((1 << bit_offset) & ((1 << 8) -1)) | c;
         bf->ptr[byte_offset] = c & ((1 << 8) - 1);
         bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
@@ -106,13 +103,8 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     arg1 = INT2FIX(100000000);
     arg2 = INT2FIX(4);
     arg3 = INT2FIX(1);
-    arg4 = INT2FIX(0);
 
     switch (argc) {
-        case 4:
-      if (argv[3] == Qtrue) {
-        arg4 = INT2FIX(1);
-      }
         case 3:
       arg3 = argv[2];
         case 2:
@@ -125,7 +117,6 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     m = FIX2INT(arg1);
     k = FIX2INT(arg2);
     b = FIX2INT(arg3);
-    r = FIX2INT(arg4);
 
     if (b < 1 || b > 8)
         rb_raise(rb_eArgError, "bucket size");
@@ -137,7 +128,6 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     bf->b = b;
     bf->m = m;
     bf->k = k;
-    bf->r = r;
 
     bf->bytes = ((m * b) + 15) / 8;
     bf->ptr = ALLOC_N(unsigned char, bf->bytes);
@@ -172,12 +162,6 @@ static VALUE bf_b(VALUE self) {
     struct BloomFilter *bf;
     Data_Get_Struct(self, struct BloomFilter, bf);
     return INT2FIX(bf->b);
-}
-
-static VALUE bf_r(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    return bf->r == 0 ? Qfalse : Qtrue;
 }
 
 static VALUE bf_set_bits(VALUE self){
@@ -239,9 +223,8 @@ static VALUE bf_and(VALUE self, VALUE other) {
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     args[2] = INT2FIX(bf->b);
-    args[3] = INT2FIX(bf->r);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(4,args,klass);
+    obj = bf_s_new(3,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] & bf_other->ptr[i];
@@ -260,9 +243,8 @@ static VALUE bf_or(VALUE self, VALUE other) {
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     args[2] = INT2FIX(bf->b);
-    args[3] = INT2FIX(bf->r);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(4,args,klass);
+    obj = bf_s_new(3,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] | bf_other->ptr[i];
@@ -349,7 +331,6 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
     rb_define_method(cBloomFilter, "b", bf_b, 0);
-    rb_define_method(cBloomFilter, "r", bf_r, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "insert", bf_insert, 1);
