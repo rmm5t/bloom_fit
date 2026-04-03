@@ -2,7 +2,8 @@ require "cbloomfilter"
 require "bloom_fit/version"
 
 class BloomFit
-  BloomFit::ConfigurationMismatch = Class.new(ArgumentError)
+  class ConfigurationMismatch < ArgumentError
+  end
 
   attr_reader :bf
 
@@ -83,7 +84,7 @@ class BloomFit
   end
 
   def stats
-    fp = ((1.0 - Math.exp(-(@hashes * size).to_f / @size)) ** @hashes) * 100
+    fp = ((1.0 - Math.exp(-(@hashes * size).to_f / @size))**@hashes) * 100
     printf "Number of filter buckets (m): %d\n", @size
     printf "Number of set bits (n): %d\n", set_bits
     printf "Number of filter hashes (k) : %d\n", @hashes
@@ -92,9 +93,9 @@ class BloomFit
 
   protected
 
-  # Returns true if parameters of the +o+ther filter are
+  # Returns true if parameters of the +other+ filter are
   # the same.
-  def same_parameters?(o)
-    @bf.m == o.bf.m && @bf.k == o.bf.k
+  def same_parameters?(other)
+    bf.m == other.bf.m && bf.k == other.bf.k
   end
 end
