@@ -74,5 +74,3 @@ static unsigned int crc_table[] = {
     0x5d681b02UL, 0x2a6f2b94UL, 0xb40bbe37UL, 0xc30c8ea1UL, 0x5a05df1bUL,
     0x2d02ef8dUL
 };
-
-unsigned int crc32(unsigned int crc, char *buf, int len);
