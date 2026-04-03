@@ -33,7 +33,7 @@ describe BloomFit do
     it "should work with any object's to_s" do
       subject.insert(:test)
       subject.insert(:test1)
-      subject.insert(12345)
+      subject.insert(12_345)
 
       expect(subject.include?("test")).to be true
       expect(subject.include?("abcd")).to be false
