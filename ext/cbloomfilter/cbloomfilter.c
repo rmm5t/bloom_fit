@@ -100,13 +100,11 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     obj = Data_Make_Struct(self, struct BloomFilter, NULL, bits_free, bf);
 
     /* default = Fugou approach :-) */
-    arg1 = INT2FIX(100000000);
+    arg1 = INT2FIX(1000);
     arg2 = INT2FIX(4);
     arg3 = INT2FIX(1);
 
     switch (argc) {
-        case 3:
-      arg3 = argv[2];
         case 2:
       arg2 = argv[1];
         case 1:
@@ -118,8 +116,6 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     k = FIX2INT(arg2);
     b = FIX2INT(arg3);
 
-    if (b < 1 || b > 8)
-        rb_raise(rb_eArgError, "bucket size");
     if (m < 1)
         rb_raise(rb_eArgError, "array size");
     if (k < 1)
@@ -156,12 +152,6 @@ static VALUE bf_k(VALUE self) {
     struct BloomFilter *bf;
     Data_Get_Struct(self, struct BloomFilter, bf);
     return INT2FIX(bf->k);
-}
-
-static VALUE bf_b(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    return INT2FIX(bf->b);
 }
 
 static VALUE bf_set_bits(VALUE self){
@@ -222,9 +212,8 @@ static VALUE bf_and(VALUE self, VALUE other) {
     Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
-    args[2] = INT2FIX(bf->b);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(3,args,klass);
+    obj = bf_s_new(2,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] & bf_other->ptr[i];
@@ -242,9 +231,8 @@ static VALUE bf_or(VALUE self, VALUE other) {
     Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
-    args[2] = INT2FIX(bf->b);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(3,args,klass);
+    obj = bf_s_new(2,args,klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] | bf_other->ptr[i];
@@ -330,7 +318,6 @@ void Init_cbloomfilter(void) {
     rb_define_singleton_method(cBloomFilter, "new", bf_s_new, -1);
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
-    rb_define_method(cBloomFilter, "b", bf_b, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "insert", bf_insert, 1);

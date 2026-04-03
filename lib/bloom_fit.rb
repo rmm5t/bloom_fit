@@ -14,7 +14,7 @@ class BloomFit
     # arg 2: k => hashes : number of hash functions
     # arg 3: b => bucket : number of bits per bucket
     # arg 4: r => raise : whether to raise on bucket overflow
-    @bf = CBloomFilter.new(@size, @hashes, 1)
+    @bf = CBloomFilter.new(@size, @hashes)
   end
 
   def insert(key)
@@ -95,6 +95,6 @@ class BloomFit
   # Returns true if parameters of the +o+ther filter are
   # the same.
   def same_parameters?(o)
-    @bf.m == o.bf.m && @bf.k == o.bf.k && @bf.b == o.bf.b
+    @bf.m == o.bf.m && @bf.k == o.bf.k
   end
 end
