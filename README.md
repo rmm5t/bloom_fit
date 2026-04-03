@@ -21,10 +21,10 @@ BloomFit is a fork of [bloomfilter-rb].
 
 MRI/C implementation which creates an in-memory filter which can be saved and reloaded from disk.
 
-If you'd like to specifcy the expected item count and the false-positive rate you can tolerate:
+(COMING SOON) If you'd like to specify an expected item count and a false-positive rate that you can tolerate:
 
 ```ruby
-require "bloom_fit'
+require "bloom_fit"
 
 bf = BloomFit.new(capacity: 250, false_positive_rate: 0.001)
 bf.add("cat")
@@ -46,7 +46,7 @@ bf.stats
 If you'd like more control over the traditional inputs like bit size and the number of hashes:
 
 ```ruby
-require "bloom_fit'
+require "bloom_fit"
 
 bf = BloomFit.new(size: 100, hashes: 2)
 bf.add("cat")
