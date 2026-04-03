@@ -200,7 +200,8 @@ static VALUE bf_set_bits(VALUE self){
 
 static VALUE bf_insert(VALUE self, VALUE key) {
     VALUE skey;
-    unsigned long hash, index;
+    unsigned long hash;
+    int index;
     int i, len, m, k;
     char *ckey;
     struct BloomFilter *bf = bf_ptr(self);
@@ -214,7 +215,7 @@ static VALUE bf_insert(VALUE self, VALUE key) {
 
     hash = (unsigned long) djb2(ckey, len);
     for (i = 0; i <= k - 1; i++) {
-        index = (unsigned long) (hash ^ salts[i]) % (unsigned int) (m);
+        index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
 
         /*  set a bit at the index */
         bucket_set(bf, index);
@@ -272,8 +273,10 @@ static VALUE bf_or(VALUE self, VALUE other) {
 }
 
 static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
-    unsigned long hash, index;
-    int i, len, m, k, tests_idx, vlen;
+    unsigned long hash;
+    int i, len, m, k;
+    int index;
+    long tests_idx, vlen;
     char *ckey;
     VALUE tests, key, skey;
     struct BloomFilter *bf;
@@ -293,7 +296,7 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
       hash = (unsigned long) djb2(ckey, len);
       for (i = 0; i <= k - 1; i++) {
-          index = (unsigned long) (hash ^ salts[i]) % (unsigned int) (m);
+          index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
 
           /* check the bit at the index */
           if (!bucket_check(bf, index)) {
