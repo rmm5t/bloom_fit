@@ -285,24 +285,24 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
     bf = bf_ptr(self);
     vlen = RARRAY_LEN(tests);
-    for(tests_idx = 0; tests_idx < vlen; tests_idx++) {
-      key = rb_ary_entry(tests, tests_idx);
-      skey = rb_obj_as_string(key);
-      ckey = StringValuePtr(skey);
-      len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
+    for (tests_idx = 0; tests_idx < vlen; tests_idx++) {
+        key = rb_ary_entry(tests, tests_idx);
+        skey = rb_obj_as_string(key);
+        ckey = StringValuePtr(skey);
+        len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
 
-      m = bf->m;
-      k = bf->k;
+        m = bf->m;
+        k = bf->k;
 
-      hash = (unsigned long) djb2(ckey, len);
-      for (i = 0; i <= k - 1; i++) {
-          index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
+        hash = (unsigned long) djb2(ckey, len);
+        for (i = 0; i <= k - 1; i++) {
+            index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
 
-          /* check the bit at the index */
-          if (!bucket_check(bf, index)) {
-              return Qfalse; /* i.e., it is a new entry ; escape the loop */
-          }
-      }
+            /* check the bit at the index */
+            if (!bucket_check(bf, index)) {
+                return Qfalse; /* i.e., it is a new entry ; escape the loop */
+            }
+        }
     }
 
     return Qtrue;
