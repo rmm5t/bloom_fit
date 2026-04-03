@@ -84,15 +84,14 @@ int bucket_check(struct BloomFilter *bf, int index) {
 
 static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
-    VALUE arg1, arg2, arg3, arg4, obj;
-    int m, k, b, r;
+    VALUE arg1, arg2, obj;
+    int m, k, b;
 
     obj = Data_Make_Struct(self, struct BloomFilter, NULL, bits_free, bf);
 
     /* default = Fugou approach :-) */
     arg1 = INT2FIX(1000);
     arg2 = INT2FIX(4);
-    arg3 = INT2FIX(1);
 
     switch (argc) {
         case 2:
@@ -104,7 +103,7 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
 
     m = FIX2INT(arg1);
     k = FIX2INT(arg2);
-    b = FIX2INT(arg3);
+    b = 1;
 
     if (m < 1)
         rb_raise(rb_eArgError, "array size");
