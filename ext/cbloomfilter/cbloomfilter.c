@@ -392,6 +392,7 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "load", bf_load, 1);
 
     /* functions that have not been implemented, yet */
-
     //  rb_define_method(cBloomFilter, "<=>", bf_cmp, 1);
+
+    rb_undef_alloc_func(cBloomFilter);
 }
