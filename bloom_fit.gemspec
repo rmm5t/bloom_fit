@@ -1,8 +1,4 @@
-# -*- encoding: utf-8 -*-
-
-lib = File.expand_path("../lib", __FILE__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "bloom_fit/version"
+require_relative "lib/bloom_fit/version"
 
 Gem::Specification.new do |spec|
   authors = {
@@ -30,14 +26,10 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true",
   }
 
-  spec.files         = `git ls-files -- {app,exe,ext,lib,test,spec}/* {LICENSE*,Rakefile,README*}`.split("\n")
-  spec.test_files    = `git ls-files -- {test,spec}/*`.split("\n")
+  spec.files = Dir.glob("{app,exe,ext,lib,test,spec}/**/*") + Dir.glob("{LICENSE,README}*")
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "irb"
-  spec.add_development_dependency "rake"
-  spec.add_development_dependency "rake-compiler"
-  spec.add_development_dependency "rspec", ">= 3"
+  spec.required_ruby_version = ">= 3.2.0"
 
   spec.extensions = ["ext/cbloomfilter/extconf.rb"]
 end

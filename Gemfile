@@ -1,3 +1,9 @@
-source "http://rubygems.org"
+source "https://rubygems.org"
 
+# Specify your gem's dependencies in the gemspec
 gemspec
+
+gem "irb"
+gem "rake"
+gem "rake-compiler"
+gem "rspec", ">= 3"
