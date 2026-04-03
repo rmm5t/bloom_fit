@@ -21,5 +21,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true # runs `bundle install` and caches gems automatically
+      - name: Lint
+        run: bin/rubocop -f github
       - name: Run tests
         run: bin/rake

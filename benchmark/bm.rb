@@ -5,7 +5,6 @@ require "bloom_fit"
 require "securerandom"
 
 n = 100_000
-c = 0
 
 # Expecting 0.0001 false-positive
 # See: https://hur.st/bloomfilter/?n=100000&p=.0001&m=&k=
