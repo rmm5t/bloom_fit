@@ -36,7 +36,9 @@ unsigned long djb2(unsigned char *str, int len) {
     return hash;
 }
 
-static void bf_free(struct BloomFilter *bf) {
+static void bf_free(void *ptr) {
+    struct BloomFilter *bf = ptr;
+
     if (bf == NULL) {
         return;
     }
@@ -45,9 +47,33 @@ static void bf_free(struct BloomFilter *bf) {
     ruby_xfree(bf);
 }
 
+static size_t bf_memsize(const void *ptr) {
+    const struct BloomFilter *bf = ptr;
+
+    if (bf == NULL) {
+        return 0;
+    }
+
+    return sizeof(*bf) + (bf->ptr == NULL ? 0 : (size_t) bf->bytes);
+}
+
+static const rb_data_type_t bf_type = {
+    "CBloomFilter",
+    {0, bf_free, bf_memsize,},
+    0, 0, RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static struct BloomFilter *bf_ptr(VALUE obj) {
+    struct BloomFilter *bf;
+
+    TypedData_Get_Struct(obj, struct BloomFilter, &bf_type, bf);
+
+    return bf;
+}
+
 static VALUE bf_alloc(VALUE klass) {
     struct BloomFilter *bf;
-    VALUE obj = Data_Make_Struct(klass, struct BloomFilter, NULL, bf_free, bf);
+    VALUE obj = TypedData_Make_Struct(klass, struct BloomFilter, &bf_type, bf);
 
     bf->m = 0;
     bf->b = 0;
@@ -105,7 +131,7 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     VALUE arg1, arg2;
     int m, k, b;
 
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    bf = bf_ptr(self);
 
     /* default = Fugou approach :-) */
     arg1 = INT2FIX(1000);
@@ -133,6 +159,8 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     bf->k = k;
 
     ruby_xfree(bf->ptr);
+    bf->ptr = NULL;
+    bf->bytes = 0;
     bf->bytes = ((m * b) + 15) / 8;
     bf->ptr = ALLOC_N(unsigned char, bf->bytes);
 
@@ -144,28 +172,24 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
 }
 
 static VALUE bf_clear(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
     memset(bf->ptr, 0, bf->bytes);
     return Qtrue;
 }
 
 static VALUE bf_m(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
     return INT2FIX(bf->m);
 }
 
 static VALUE bf_k(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
     return INT2FIX(bf->k);
 }
 
 static VALUE bf_set_bits(VALUE self){
-    struct BloomFilter *bf;
+    struct BloomFilter *bf = bf_ptr(self);
     int i,j,count = 0;
-    Data_Get_Struct(self, struct BloomFilter, bf);
     for (i = 0; i < bf->bytes; i++) {
         for (j = 0; j < 8; j++) {
             count += (bf->ptr[i] >> j) & 1;
@@ -179,8 +203,7 @@ static VALUE bf_insert(VALUE self, VALUE key) {
     unsigned long hash, index;
     int i, len, m, k;
     char *ckey;
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
 
     skey = rb_obj_as_string(key);
     ckey = StringValuePtr(skey);
@@ -201,10 +224,9 @@ static VALUE bf_insert(VALUE self, VALUE key) {
 }
 
 static VALUE bf_merge(VALUE self, VALUE other) {
-    struct BloomFilter *bf, *target;
+    struct BloomFilter *bf = bf_ptr(self);
+    struct BloomFilter *target = bf_ptr(other);
     int i;
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    Data_Get_Struct(other, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++) {
         bf->ptr[i] |= target->ptr[i];
     }
@@ -212,17 +234,17 @@ static VALUE bf_merge(VALUE self, VALUE other) {
 }
 
 static VALUE bf_and(VALUE self, VALUE other) {
-    struct BloomFilter *bf, *bf_other, *target;
+    struct BloomFilter *bf = bf_ptr(self);
+    struct BloomFilter *bf_other = bf_ptr(other);
+    struct BloomFilter *target;
     VALUE klass, obj, args[5];
     int i;
 
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     klass = rb_funcall(self,rb_intern("class"),0);
     obj = rb_class_new_instance(2, args, klass);
-    Data_Get_Struct(obj, struct BloomFilter, target);
+    target = bf_ptr(obj);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] & bf_other->ptr[i];
     }
@@ -231,17 +253,17 @@ static VALUE bf_and(VALUE self, VALUE other) {
 }
 
 static VALUE bf_or(VALUE self, VALUE other) {
-    struct BloomFilter *bf, *bf_other, *target;
+    struct BloomFilter *bf = bf_ptr(self);
+    struct BloomFilter *bf_other = bf_ptr(other);
+    struct BloomFilter *target;
     VALUE klass, obj, args[5];
     int i;
 
-    Data_Get_Struct(self, struct BloomFilter, bf);
-    Data_Get_Struct(other, struct BloomFilter, bf_other);
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     klass = rb_funcall(self,rb_intern("class"),0);
     obj = rb_class_new_instance(2, args, klass);
-    Data_Get_Struct(obj, struct BloomFilter, target);
+    target = bf_ptr(obj);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] | bf_other->ptr[i];
     }
@@ -258,7 +280,7 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 
     rb_scan_args(argc, argv, "*", &tests);
 
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    bf = bf_ptr(self);
     vlen = RARRAY_LEN(tests);
     for(tests_idx = 0; tests_idx < vlen; tests_idx++) {
       key = rb_ary_entry(tests, tests_idx);
@@ -284,12 +306,11 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
 }
 
 static VALUE bf_to_s(VALUE self) {
-    struct BloomFilter *bf;
+    struct BloomFilter *bf = bf_ptr(self);
     unsigned char *ptr;
     int i;
     VALUE str;
 
-    Data_Get_Struct(self, struct BloomFilter, bf);
     str = rb_str_new(0, bf->m);
 
     ptr = (unsigned char *) RSTRING_PTR(str);
@@ -300,8 +321,7 @@ static VALUE bf_to_s(VALUE self) {
 }
 
 static VALUE bf_bitmap(VALUE self) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
 
     VALUE str = rb_str_new(0, bf->bytes);
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(str);
@@ -312,8 +332,7 @@ static VALUE bf_bitmap(VALUE self) {
 }
 
 static VALUE bf_load(VALUE self, VALUE bitmap) {
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
+    struct BloomFilter *bf = bf_ptr(self);
     unsigned char* ptr = (unsigned char *) RSTRING_PTR(bitmap);
 
     memcpy(bf->ptr, ptr, bf->bytes);
