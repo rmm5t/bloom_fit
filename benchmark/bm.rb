@@ -1,4 +1,4 @@
-$LOAD_PATH << "lib"
+#!/usr/bin/env ruby
 
 require "benchmark"
 require "bloom_fit"
