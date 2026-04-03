@@ -36,8 +36,26 @@ unsigned long djb2(unsigned char *str, int len) {
     return hash;
 }
 
-void bits_free(struct BloomFilter *bf) {
+static void bf_free(struct BloomFilter *bf) {
+    if (bf == NULL) {
+        return;
+    }
+
     ruby_xfree(bf->ptr);
+    ruby_xfree(bf);
+}
+
+static VALUE bf_alloc(VALUE klass) {
+    struct BloomFilter *bf;
+    VALUE obj = Data_Make_Struct(klass, struct BloomFilter, NULL, bf_free, bf);
+
+    bf->m = 0;
+    bf->b = 0;
+    bf->k = 0;
+    bf->ptr = NULL;
+    bf->bytes = 0;
+
+    return obj;
 }
 
 void bucket_unset(struct BloomFilter *bf, int index) {
@@ -82,12 +100,12 @@ int bucket_check(struct BloomFilter *bf, int index) {
     return (c & mask) >> bit_offset;
 }
 
-static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
+static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
-    VALUE arg1, arg2, obj;
+    VALUE arg1, arg2;
     int m, k, b;
 
-    obj = Data_Make_Struct(self, struct BloomFilter, NULL, bits_free, bf);
+    Data_Get_Struct(self, struct BloomFilter, bf);
 
     /* default = Fugou approach :-) */
     arg1 = INT2FIX(1000);
@@ -114,14 +132,15 @@ static VALUE bf_s_new(int argc, VALUE *argv, VALUE self) {
     bf->m = m;
     bf->k = k;
 
+    ruby_xfree(bf->ptr);
     bf->bytes = ((m * b) + 15) / 8;
     bf->ptr = ALLOC_N(unsigned char, bf->bytes);
 
     /* initialize the bits with zeros */
     memset(bf->ptr, 0, bf->bytes);
-    rb_iv_set(obj, "@hash_value", rb_hash_new());
+    rb_iv_set(self, "@hash_value", rb_hash_new());
 
-    return obj;
+    return self;
 }
 
 static VALUE bf_clear(VALUE self) {
@@ -202,7 +221,7 @@ static VALUE bf_and(VALUE self, VALUE other) {
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(2,args,klass);
+    obj = rb_class_new_instance(2, args, klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] & bf_other->ptr[i];
@@ -221,7 +240,7 @@ static VALUE bf_or(VALUE self, VALUE other) {
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
     klass = rb_funcall(self,rb_intern("class"),0);
-    obj = bf_s_new(2,args,klass);
+    obj = rb_class_new_instance(2, args, klass);
     Data_Get_Struct(obj, struct BloomFilter, target);
     for (i = 0; i < bf->bytes; i++){
         target->ptr[i] = bf->ptr[i] | bf_other->ptr[i];
@@ -304,7 +323,8 @@ static VALUE bf_load(VALUE self, VALUE bitmap) {
 
 void Init_cbloomfilter(void) {
     cBloomFilter = rb_define_class("CBloomFilter", rb_cObject);
-    rb_define_singleton_method(cBloomFilter, "new", bf_s_new, -1);
+    rb_define_alloc_func(cBloomFilter, bf_alloc);
+    rb_define_method(cBloomFilter, "initialize", bf_initialize, -1);
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
@@ -322,6 +342,4 @@ void Init_cbloomfilter(void) {
 
     /* functions that have not been implemented, yet */
     //  rb_define_method(cBloomFilter, "<=>", bf_cmp, 1);
-
-    rb_undef_alloc_func(cBloomFilter);
 }
