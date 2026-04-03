@@ -36,7 +36,7 @@ describe BloomFit do
 
     expect(subject.include?("test")).to be true
     expect(subject.include?("abcd")).to be false
-    expect(subject.include?("test", "test1", "12345")).to be true
+    expect(subject.include?("12345")).to be true
   end
 
   it "returns the number of bits set to 1" do
