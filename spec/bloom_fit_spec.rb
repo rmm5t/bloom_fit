@@ -2,7 +2,7 @@ require "helper"
 
 describe BloomFit do
   it "should clear" do
-    bf = BloomFit.new(:size => 100, :hashes => 2)
+    bf = BloomFit.new(size: 100, hashes: 2)
     bf.insert("test")
     expect(bf.include?("test")).to be true
     bf.clear
@@ -10,8 +10,8 @@ describe BloomFit do
   end
 
   it "should merge" do
-    bf1 = BloomFit.new(:size => 100, :hashes => 2)
-    bf2 = BloomFit.new(:size => 100, :hashes => 2)
+    bf1 = BloomFit.new(size: 100, hashes: 2)
+    bf2 = BloomFit.new(size: 100, hashes: 2)
     bf2.insert("test")
     expect(bf1.include?("test")).to be false
     bf1.merge!(bf2)
@@ -21,7 +21,7 @@ describe BloomFit do
 
   context "behave like a bloom filter" do
     it "should test set membership" do
-      bf = BloomFit.new(:size => 100, :hashes => 2)
+      bf = BloomFit.new(size: 100, hashes: 2)
       bf.insert("test")
       bf.insert("test1")
 
@@ -66,10 +66,10 @@ describe BloomFit do
     end
 
     it "should raise an exception when intersection is to be computed for incompatible filters" do
-      bf1 = BloomFit.new(:size => 10)
+      bf1 = BloomFit.new(size: 10)
       bf1.insert("test")
 
-      bf2 = BloomFit.new(:size => 20)
+      bf2 = BloomFit.new(size: 20)
       bf2.insert("test")
 
       expect { bf1 & bf2 }.to raise_error(BloomFit::ConfigurationMismatch)
@@ -91,10 +91,10 @@ describe BloomFit do
     end
 
     it "should raise an exception when union is to be computed for incompatible filters" do
-      bf1 = BloomFit.new(:size => 10)
+      bf1 = BloomFit.new(size: 10)
       bf1.insert("test")
 
-      bf2 = BloomFit.new(:size => 20)
+      bf2 = BloomFit.new(size: 20)
       bf2.insert("test")
 
       expect {bf1 | bf2}.to raise_error(BloomFit::ConfigurationMismatch)
