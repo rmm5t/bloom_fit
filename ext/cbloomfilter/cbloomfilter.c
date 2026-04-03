@@ -303,9 +303,9 @@ static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
               return Qfalse; /* i.e., it is a new entry ; escape the loop */
           }
       }
-
-      return Qtrue;
     }
+
+    return Qtrue;
 }
 
 static VALUE bf_to_s(VALUE self) {

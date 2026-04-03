@@ -27,6 +27,7 @@ describe BloomFit do
     expect(bf.include?("test")).to be true
     expect(bf.include?("abcd")).to be false
     expect(bf.include?("test", "test1")).to be true
+    expect(bf.include?("test1", "abcd")).to be false
   end
 
   it "works with any object's to_s" do
