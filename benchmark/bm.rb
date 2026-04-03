@@ -1,4 +1,4 @@
-$:<< "lib"
+$LOAD_PATH << "lib"
 
 require "benchmark"
 require "bloom_fit"
@@ -39,7 +39,7 @@ Benchmark.bm do |x|
   end
 end
 
-printf "false-positive rate:  %.4f\n", (c.to_f / n.to_f)
+printf "false-positive rate:  %.4f\n", (c.to_f / n)
 
 #       user     system      total        real
 # insert  1.000000   0.380000   1.380000 (  1.942181)
