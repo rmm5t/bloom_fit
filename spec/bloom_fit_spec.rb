@@ -42,11 +42,11 @@ describe BloomFit do
   it "returns the number of bits set to 1" do
     bf = BloomFit.new(hashes: 4)
     bf.insert("test")
-    expect(bf.set_bits).to be == 4
+    expect(bf.set_bits).to eq 4
 
     bf = BloomFit.new(hashes: 1)
     bf.insert("test")
-    expect(bf.set_bits).to be == 1
+    expect(bf.set_bits).to eq 1
   end
 
   it "returns intersection with other filter" do
@@ -96,7 +96,7 @@ describe BloomFit do
     bf2 = BloomFit.new(size: 20)
     bf2.insert("test")
 
-    expect {bf1 | bf2}.to raise_error(BloomFit::ConfigurationMismatch)
+    expect { bf1 | bf2 }.to raise_error(BloomFit::ConfigurationMismatch)
   end
 
   it "outputs current stats" do
@@ -105,7 +105,7 @@ describe BloomFit do
   end
 
   context "serialization" do
-    after(:each) { File.unlink("bf.out") }
+    after { File.unlink("bf.out") }
 
     it "marshalls" do
       bf = BloomFit.new
