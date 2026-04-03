@@ -271,33 +271,6 @@ static VALUE bf_or(VALUE self, VALUE other) {
     return obj;
 }
 
-static VALUE bf_delete(VALUE self, VALUE key) {
-    unsigned long hash, index;
-    int i, len, m, k;
-    char *ckey;
-    VALUE skey;
-    struct BloomFilter *bf;
-    Data_Get_Struct(self, struct BloomFilter, bf);
-
-    skey = rb_obj_as_string(key);
-    ckey = StringValuePtr(skey);
-    len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
-
-    m = bf->m;
-    k = bf->k;
-
-    hash = (unsigned long) djb2(ckey, len);
-    for (i = 0; i <= k - 1; i++) {
-        index = (unsigned long) (hash ^ seeds[i]) % (unsigned int) (m);
-
-        /*  set a bit at the index */
-        bucket_unset(bf, index);
-    }
-
-    return Qnil;
-}
-
-
 static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
     unsigned long hash, index;
     int i, len, m, k, tests_idx, vlen;
@@ -380,7 +353,6 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "insert", bf_insert, 1);
-    rb_define_method(cBloomFilter, "delete", bf_delete, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, -1);
     rb_define_method(cBloomFilter, "clear", bf_clear, 0);
     rb_define_method(cBloomFilter, "merge!", bf_merge, 1);

@@ -28,7 +28,6 @@ class BloomFit
   alias :key? :include?
   alias :[] :include?
 
-  def delete(key); @bf.delete(key); end
   def clear; @bf.clear; end
   def size; @bf.set_bits; end
   def merge!(o); @bf.merge!(o.bf); end

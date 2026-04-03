@@ -44,8 +44,6 @@ describe BloomFit do
       bf = BloomFit.new(:hashes => 4)
       bf.insert("test")
       expect(bf.set_bits).to be == 4
-      bf.delete("test")
-      expect(bf.set_bits).to be == 0
 
       bf = BloomFit.new(:hashes => 1)
       bf.insert("test")
@@ -107,16 +105,6 @@ describe BloomFit do
       expect { subject.stats }.not_to raise_error
     end
   end
-
-  # context "behave like counting bloom filter" do
-  #   it "should delete / decrement keys" do
-  #     subject.insert("test")
-  #     expect(subject.include?("test")).to be true
-
-  #     subject.delete("test")
-  #     expect(subject.include?("test")).to be false
-  #   end
-  # end
 
   context "serialize" do
     after(:each) { File.unlink('bf.out') }
