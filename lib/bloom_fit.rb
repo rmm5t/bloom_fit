@@ -6,20 +6,15 @@ class BloomFit
 
   attr_reader :bf
 
-  def initialize(opts = {})
-    @opts = {
-      :size    => 100,
-      :hashes  => 4,
-      :bucket  => 1,
-      :raise   => false
-    }.merge(opts)
+  def initialize(size: 1_000, hashes: 4)
+    @size = size
+    @hashes = hashes
 
     # arg 1: m => size : number of buckets in a bloom filter
     # arg 2: k => hashes : number of hash functions
     # arg 3: b => bucket : number of bits per bucket
     # arg 4: r => raise : whether to raise on bucket overflow
-
-    @bf = CBloomFilter.new(@opts[:size], @opts[:hashes], @opts[:bucket], @opts[:raise])
+    @bf = CBloomFilter.new(@size, @hashes, 1, false)
   end
 
   def insert(key)
@@ -68,14 +63,14 @@ class BloomFit
   end
 
   def marshal_load(ary)
-    opts, bitmap = *ary
+    size, hashes, bitmap = *ary
 
-    initialize(opts)
-    @bf.load(bitmap) if !bitmap.nil?
+    initialize(size:, hashes:)
+    @bf.load(bitmap) if bitmap
   end
 
   def marshal_dump
-    [@opts, @bf.bitmap]
+    [@size, @hashes, @bf.bitmap]
   end
 
   def self.load(filename)
@@ -89,11 +84,10 @@ class BloomFit
   end
 
   def stats
-    fp = ((1.0 - Math.exp(-(@opts[:hashes] * size).to_f / @opts[:size])) ** @opts[:hashes]) * 100
-    printf "Number of filter buckets (m): %d\n", @opts[:size]
-    printf "Number of bits per buckets (b): %d\n", @opts[:bucket]
+    fp = ((1.0 - Math.exp(-(@hashes * size).to_f / @size)) ** @hashes) * 100
+    printf "Number of filter buckets (m): %d\n", @size
     printf "Number of set bits (n): %d\n", set_bits
-    printf "Number of filter hashes (k) : %d\n", @opts[:hashes]
+    printf "Number of filter hashes (k) : %d\n", @hashes
     printf "Predicted false positive rate = %.2f%%\n", fp
   end
 

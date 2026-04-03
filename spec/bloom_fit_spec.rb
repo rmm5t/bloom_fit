@@ -2,7 +2,7 @@ require "helper"
 
 describe BloomFit do
   it "should clear" do
-    bf = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf = BloomFit.new(:size => 100, :hashes => 2)
     bf.insert("test")
     expect(bf.include?("test")).to be true
     bf.clear
@@ -10,8 +10,8 @@ describe BloomFit do
   end
 
   it "should merge" do
-    bf1 = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
-    bf2 = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+    bf1 = BloomFit.new(:size => 100, :hashes => 2)
+    bf2 = BloomFit.new(:size => 100, :hashes => 2)
     bf2.insert("test")
     expect(bf1.include?("test")).to be false
     bf1.merge!(bf2)
@@ -21,7 +21,7 @@ describe BloomFit do
 
   context "behave like a bloom filter" do
     it "should test set membership" do
-      bf = BloomFit.new(:size => 100, :hashes => 2, :bucket => 3, :raise => false)
+      bf = BloomFit.new(:size => 100, :hashes => 2)
       bf.insert("test")
       bf.insert("test1")
 
@@ -108,15 +108,15 @@ describe BloomFit do
     end
   end
 
-  context "behave like counting bloom filter" do
-    it "should delete / decrement keys" do
-      subject.insert("test")
-      expect(subject.include?("test")).to be true
+  # context "behave like counting bloom filter" do
+  #   it "should delete / decrement keys" do
+  #     subject.insert("test")
+  #     expect(subject.include?("test")).to be true
 
-      subject.delete("test")
-      expect(subject.include?("test")).to be false
-    end
-  end
+  #     subject.delete("test")
+  #     expect(subject.include?("test")).to be false
+  #   end
+  # end
 
   context "serialize" do
     after(:each) { File.unlink('bf.out') }
@@ -137,16 +137,6 @@ describe BloomFit do
       expect(bf2.include?('baz')).to be false
 
       expect(subject.send(:same_parameters?, bf2)).to be true
-    end
-
-    it "should serialize to a file size proporational its bucket size" do
-      fs_size = 0
-      8.times do |i|
-        bf = BloomFit.new(size: 10_000, bucket: i+1)
-        bf.save('bf.out')
-        prev_size, fs_size = fs_size, File.size('bf.out')
-        expect(prev_size).to be < fs_size
-      end
     end
   end
 end
