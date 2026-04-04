@@ -4,7 +4,12 @@
 [![CI](https://github.com/rmm5t/bloom_fit/actions/workflows/ci.yml/badge.svg)](https://github.com/rmm5t/bloom_fit/actions/workflows/ci.yml)
 [![Gem Downloads](https://img.shields.io/gem/dt/bloom_fit.svg)](https://rubygems.org/gems/bloom_fit)
 
-BloomFit provides a MRI/C-based non-counting bloom filter for use in your Ruby projects. It is heavily based on [bloomfilter-rb]'s native implementation, but provides a better hashing distribution by using DJB2 over CRC32, avoids the need to supply a seed, removes counting abilities, improves performance for very large datasets, and will automatically calculate the bit size (m) and the number of hashes (k) when given a capacity and false-positive-rate.
+BloomFit provides a MRI/C-based non-counting bloom filter for use in your Ruby projects. It is heavily based on [bloomfilter-rb]'s native implementation, but differs in the following ways:
+
+- uses DJB2 over CRC32 yielding better hash distribution
+- improves performance for very large datasets
+- avoids the need to supply a seed
+- automatically calculates the bit size (m) and the number of hashes (k) when given a capacity and false-positive-rate
 
 A [Bloom filter](http://en.wikipedia.org/wiki/Bloom_filter) is a space-efficient probabilistic data structure that is used to test whether an element is a member of a set. False positives are possible, but false negatives are not. Instead of using k different hash functions, this implementation a DJB2 hash with k seeds from the CRC table.
 
@@ -12,8 +17,6 @@ Performance of the Bloom filter depends on the following:
 
 - size of the bit array
 - number of hash functions
-
-BloomFit is a fork of [bloomfilter-rb].
 
 ## Resources
 
