@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 -
 
+## [0.3.1] - 2026-04-04
+
+- Add rdoc comments ([#14])
+
 ## [0.3.0] - 2026-04-04
 
 - Switch from rspec to minitest ([#7])
@@ -33,7 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 - Initial release based on [bloomfilter-rb](https://github.com/igrigorik/bloomfilter-rb)
 
-[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v0.3.0..HEAD
+[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v0.3.1..HEAD
+[0.3.1]: https://github.com/rmm5t/bloom_fit/compare/v0.3.0..v0.3.1
 [0.3.0]: https://github.com/rmm5t/bloom_fit/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/rmm5t/bloom_fit/compare/v0.1.1..v0.2.0
 [0.1.1]: https://github.com/rmm5t/bloom_fit/compare/v0.1.0..v0.1.1
@@ -46,3 +51,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 [#11]: https://github.com/rmm5t/bloom_fit/pull/11
 [#12]: https://github.com/rmm5t/bloom_fit/pull/12
 [#13]: https://github.com/rmm5t/bloom_fit/pull/13
+[#14]: https://github.com/rmm5t/bloom_fit/pull/14
