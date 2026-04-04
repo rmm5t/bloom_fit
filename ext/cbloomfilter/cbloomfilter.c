@@ -327,7 +327,7 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "add", bf_add, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, 1);
     rb_define_method(cBloomFilter, "clear", bf_clear, 0);
-    rb_define_method(cBloomFilter, "merge!", bf_merge, 1);
+    rb_define_method(cBloomFilter, "merge", bf_merge, 1);
     rb_define_method(cBloomFilter, "&", bf_and, 1);
     rb_define_method(cBloomFilter, "|", bf_or, 1);
 

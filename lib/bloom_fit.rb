@@ -9,54 +9,102 @@ class BloomFit
 
   attr_reader :bf
 
+  # @param size [Integer] number of buckets in a bloom filter
+  # @param hashes [Integer] number of hash functions
   def initialize(size: 1_000, hashes: 4)
-    @size = size
-    @hashes = hashes
-
-    # arg 1: m => size : number of buckets in a bloom filter
-    # arg 2: k => hashes : number of hash functions
-    @bf = CBloomFilter.new(@size, @hashes)
+    @bf = CBloomFilter.new(size, hashes)
   end
 
-  def_delegators :@bf, :add, :include?, :clear, :set_bits, :bitmap
+  def_delegators :@bf, :m, :k, :bitmap, :include?, :clear, :set_bits
 
-  alias << add
-  alias []= add
-
+  alias size m
+  alias hashes k
   alias key? include?
   alias [] include?
+  alias n set_bits
 
-  # Returns the number of bits that are set to 1 in the filter.
-  def size = @bf.set_bits
+  def empty?
+    set_bits.zero?
+  end
 
+  # Adds the given key to the set and returns +self+.  Mimics the behavior of
+  # +Set#add+
+  def add(key)
+    @bf.add(key)
+    self
+  end
+  alias << add
+
+  # Adds the given key to the set if the value is truthy.  Mimics the behavior of
+  # +Hash#[]=+
+  def []=(key, value)
+    @bf.add(key) if value
+  end
+
+  # Adds the given key to the set and returns +self+. If the key is already
+  # the in set, returns +nil+. Mimics the behavior of +Set#add?+
+  def add?(key)
+    return nil if include?(key) # rubocop:disable Style/ReturnNilInPredicateMethodDefinition
+    add(key)
+  end
+
+  # Returns a string of the set bits in hex format
   def to_hex
-    bitmap.unpack1("H*")
+    length = ((size / 8.0).ceil * 8 / 4)
+    bitmap.unpack1("H*")[0...length]
   end
 
+  # Returns a string of the set bits in binary format
   def to_binary
-    bitmap.unpack1("B*")
+    bitmap.unpack1("B*")[0...size]
   end
 
-  def merge!(other) = @bf.merge!(other.bf)
+  # Adds the set from another BloomFit filter or adds all the elements from an
+  # enumerable.  Mimics the behavior of +Set#merge+
+  def merge(other)
+    if other.is_a?(BloomFit)
+      raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
+      @bf.merge(other.bf)
+    elsif other.respond_to?(:each_key)
+      other.each { |k, v| add(k) if v }
+    elsif other.is_a?(Enumerable)
+      other.each { |k| add(k) }
+    else
+      raise ArgumentError, "value must be enumerable or another BloomFit filter"
+    end
+  end
 
-  # Computes the intersection of two Bloom filters.
-  # It assumes that both filters have the same size -
-  # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
+  # Computes the intersection of two Bloom filters. It requires that both
+  # filters have the same size; otherwise, +BloomFit::ConfigurationMismatch+
+  # is raised.
   def &(other)
     raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
-    result = self.class.new
-    result.instance_variable_set(:@bf, @bf.&(other.bf))
-    result
+    self.class.new(size:, hashes:).tap do |result|
+      result.instance_variable_set(:@bf, @bf.&(other.bf))
+    end
   end
+  alias intersection &
 
-  # Computes the union of two Bloom filters.
-  # It assumes that both filters have the same size -
-  # if this is not true +BloomFit::ConfigurationMismatch+ is raised.
+  # Computes the union of two Bloom filters. It requires that both filters
+  # have the same size; otherwise, +BloomFit::ConfigurationMismatch+ is
+  # raised.
   def |(other)
     raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
-    result = self.class.new
-    result.instance_variable_set(:@bf, @bf.|(other.bf))
-    result
+    self.class.new(size:, hashes:).tap do |result|
+      result.instance_variable_set(:@bf, @bf.|(other.bf))
+    end
+  end
+  alias union |
+
+  def stats
+    fpr = ((1.0 - Math.exp(-(k * n).to_f / m))**k) * 100
+
+    (+"").tap do |s|
+      s << format("Number of filter buckets (m):  %d\n",     m)
+      s << format("Number of set bits (n):        %d\n",     n)
+      s << format("Number of filter hashes (k):   %d\n",     k)
+      s << format("Predicted false positive rate: %.2f%%\n", fpr)
+    end
   end
 
   def marshal_load(ary)
@@ -67,7 +115,7 @@ class BloomFit
   end
 
   def marshal_dump
-    [@size, @hashes, @bf.bitmap]
+    [size, hashes, bitmap]
   end
 
   def self.load(filename)
@@ -77,17 +125,6 @@ class BloomFit
   def save(filename)
     File.open(filename, "w") do |f|
       f << Marshal.dump(self)
-    end
-  end
-
-  def stats
-    fpr = ((1.0 - Math.exp(-(@hashes * size).to_f / @size))**@hashes) * 100
-
-    (+"").tap do |s|
-      s << format("Number of filter buckets (m):  %d\n",     @size)
-      s << format("Number of set bits (n):        %d\n",     set_bits)
-      s << format("Number of filter hashes (k):   %d\n",     @hashes)
-      s << format("Predicted false positive rate: %.2f%%\n", fpr)
     end
   end
 
