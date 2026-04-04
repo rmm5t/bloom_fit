@@ -106,7 +106,7 @@ void bucket_set(struct BloomFilter *bf, int index) {
     c += bf->ptr[byte_offset + 1] << 8;
     unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
     if ((c & mask) != mask) {
-        c = c + ((1 << bit_offset) & ((1 << 8) -1)) | c;
+        c = (c + ((1 << bit_offset) & ((1 << 8) -1))) | c;
         bf->ptr[byte_offset] = c & ((1 << 8) - 1);
         bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
     }
