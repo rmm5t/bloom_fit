@@ -194,7 +194,7 @@ static VALUE bf_set_bits(VALUE self){
     return INT2FIX(count);
 }
 
-static VALUE bf_insert(VALUE self, VALUE key) {
+static VALUE bf_add(VALUE self, VALUE key) {
     VALUE skey;
     unsigned long hash;
     int index;
@@ -347,7 +347,7 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "k", bf_k, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
-    rb_define_method(cBloomFilter, "insert", bf_insert, 1);
+    rb_define_method(cBloomFilter, "add", bf_add, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, -1);
     rb_define_method(cBloomFilter, "clear", bf_clear, 0);
     rb_define_method(cBloomFilter, "merge!", bf_merge, 1);

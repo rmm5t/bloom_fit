@@ -9,12 +9,12 @@ n = 100_000
 # Expecting 0.0001 false-positive
 # See: https://hur.st/bloomfilter/?n=100000&p=.0001&m=&k=
 bf = BloomFit.new(size: 1_917_012, hashes: 14)
-bf.insert("exists")
+bf << "exists"
 
 Benchmark.bm do |x|
-  x.report("insert") do
+  x.report("add") do
     n.times do
-      bf.insert("exists")
+      bf << "exists"
     end
   end
 
@@ -36,7 +36,7 @@ puts "false-positive checks - constant adds; constant checks:"
 bf.clear
 c = 0
 n.times do
-  bf.insert(Random.alphanumeric(64))
+  bf << Random.alphanumeric(64)
 end
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(64))
@@ -51,7 +51,7 @@ puts "false-positive checks - variable adds; constant checks:"
 bf.clear
 c = 0
 n.times do
-  bf.insert(Random.alphanumeric(rand(20..512)))
+  bf << Random.alphanumeric(rand(20..512))
 end
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(64))
@@ -66,7 +66,7 @@ puts "false-positive checks - constant adds and variable checks:"
 bf.clear
 c = 0
 n.times do
-  bf.insert(Random.alphanumeric(64))
+  bf << Random.alphanumeric(64)
 end
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
@@ -81,7 +81,7 @@ puts "false-positive checks - variable adds; variable checks:"
 bf.clear
 c = 0
 n.times do
-  bf.insert(Random.alphanumeric(rand(20..512)))
+  bf << Random.alphanumeric(rand(20..512))
 end
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
@@ -96,7 +96,7 @@ puts "false-positive checks - 8x uuid adds; 8x uuid checks:"
 bf.clear
 c = 0
 n.times do
-  bf.insert(Random.uuid * 8)
+  bf << (Random.uuid * 8)
 end
 n.times do
   c += 1 if bf.include?(Random.uuid * 8)

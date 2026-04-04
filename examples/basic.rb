@@ -7,7 +7,7 @@ TEST = %w(penguin moose racooon).freeze
 
 bf = BloomFit.new(size: 1000, hashes: 2)
 
-WORDS.each { |w| bf.insert(w) }
+WORDS.each { |w| bf.add(w) }
 TEST.each do |w|
   puts "#{w}: #{bf.include?(w)}"
 end

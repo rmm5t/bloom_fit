@@ -5,7 +5,7 @@ class BloomFitTest < Minitest::Spec
 
   it "clears" do
     bf = BloomFit.new(size: 100, hashes: 2)
-    bf.insert("test")
+    bf.add("test")
     assert_includes bf, "test"
     bf.clear
     refute_includes bf, "test"
@@ -14,7 +14,7 @@ class BloomFitTest < Minitest::Spec
   it "merges" do
     bf1 = BloomFit.new(size: 100, hashes: 2)
     bf2 = BloomFit.new(size: 100, hashes: 2)
-    bf2.insert("test")
+    bf2.add("test")
     refute_includes bf1, "test"
     bf1.merge!(bf2)
     assert_includes bf1, "test"
@@ -23,8 +23,8 @@ class BloomFitTest < Minitest::Spec
 
   it "tests set membership" do
     bf = BloomFit.new(size: 100, hashes: 2)
-    bf.insert("test")
-    bf.insert("test1")
+    bf.add("test")
+    bf.add("test1")
 
     assert_includes bf, "test"
     refute_includes bf, "abcd"
@@ -33,9 +33,9 @@ class BloomFitTest < Minitest::Spec
   end
 
   it "works with any object's to_s" do
-    subject.insert(:test)
-    subject.insert(:test1)
-    subject.insert(12_345)
+    subject.add(:test)
+    subject.add(:test1)
+    subject.add(12_345)
 
     assert_includes subject, "test"
     refute_includes subject, "abcd"
@@ -44,22 +44,22 @@ class BloomFitTest < Minitest::Spec
 
   it "returns the number of bits set to 1" do
     bf = BloomFit.new(hashes: 4)
-    bf.insert("test")
+    bf.add("test")
     assert_equal 4, bf.set_bits
 
     bf = BloomFit.new(hashes: 1)
-    bf.insert("test")
+    bf.add("test")
     assert_equal 1, bf.set_bits
   end
 
   it "returns intersection with other filter" do
     bf1 = BloomFit.new
-    bf1.insert("test")
-    bf1.insert("test1")
+    bf1.add("test")
+    bf1.add("test1")
 
     bf2 = BloomFit.new
-    bf2.insert("test")
-    bf2.insert("test2")
+    bf2.add("test")
+    bf2.add("test2")
 
     bf3 = bf1 & bf2
     assert_includes bf3, "test"
@@ -69,22 +69,22 @@ class BloomFitTest < Minitest::Spec
 
   it "raises an exception when intersection is to be computed for incompatible filters" do
     bf1 = BloomFit.new(size: 10)
-    bf1.insert("test")
+    bf1.add("test")
 
     bf2 = BloomFit.new(size: 20)
-    bf2.insert("test")
+    bf2.add("test")
 
     assert_raises(BloomFit::ConfigurationMismatch) { bf1 & bf2 }
   end
 
   it "returns union with other filter" do
     bf1 = BloomFit.new
-    bf1.insert("test")
-    bf1.insert("test1")
+    bf1.add("test")
+    bf1.add("test1")
 
     bf2 = BloomFit.new
-    bf2.insert("test")
-    bf2.insert("test2")
+    bf2.add("test")
+    bf2.add("test2")
 
     bf3 = bf1 | bf2
     assert_includes bf3, "test"
@@ -94,16 +94,16 @@ class BloomFitTest < Minitest::Spec
 
   it "raises an exception when union is to be computed for incompatible filters" do
     bf1 = BloomFit.new(size: 10)
-    bf1.insert("test")
+    bf1.add("test")
 
     bf2 = BloomFit.new(size: 20)
-    bf2.insert("test")
+    bf2.add("test")
 
     assert_raises(BloomFit::ConfigurationMismatch) { bf1 | bf2 }
   end
 
   it "outputs current stats" do
-    subject.insert("test")
+    subject.add("test")
     assert subject.stats
   end
 
@@ -116,8 +116,8 @@ class BloomFitTest < Minitest::Spec
     end
 
     it "loads from marshalled" do
-      subject.insert("foo")
-      subject.insert("bar")
+      subject.add("foo")
+      subject.add("bar")
       subject.save("bf.out")
 
       bf2 = BloomFit.load("bf.out")
