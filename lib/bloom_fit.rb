@@ -1,10 +1,8 @@
 require "cbloomfilter"
+require "bloom_fit/configuration_mismatch"
 require "bloom_fit/version"
 
 class BloomFit
-  class ConfigurationMismatch < ArgumentError
-  end
-
   attr_reader :bf
 
   def initialize(size: 1_000, hashes: 4)
