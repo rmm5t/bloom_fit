@@ -1,8 +1,12 @@
+require "forwardable"
+
 require "cbloomfilter"
 require "bloom_fit/configuration_mismatch"
 require "bloom_fit/version"
 
 class BloomFit
+  extend Forwardable
+
   attr_reader :bf
 
   def initialize(size: 1_000, hashes: 4)
@@ -14,26 +18,18 @@ class BloomFit
     @bf = CBloomFilter.new(@size, @hashes)
   end
 
-  def add(key)
-    @bf.add(key)
-  end
+  def_delegators :@bf, :add, :include?, :clear, :set_bits, :bitmap
+
   alias << add
   alias []= add
 
-  def include?(key)
-    @bf.include?(key)
-  end
   alias key? include?
   alias [] include?
 
-  def clear = @bf.clear
-  def size = @bf.set_bits
-  def merge!(other) = @bf.merge!(other.bf)
-
   # Returns the number of bits that are set to 1 in the filter.
-  def set_bits
-    @bf.set_bits
-  end
+  def size = @bf.set_bits
+
+  def merge!(other) = @bf.merge!(other.bf)
 
   # Computes the intersection of two Bloom filters.
   # It assumes that both filters have the same size -
@@ -53,10 +49,6 @@ class BloomFit
     result = self.class.new
     result.instance_variable_set(:@bf, @bf.|(other.bf))
     result
-  end
-
-  def bitmap
-    @bf.bitmap
   end
 
   def marshal_load(ary)
