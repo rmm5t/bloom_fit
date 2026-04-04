@@ -16,10 +16,11 @@ class BloomFit
     @bf = CBloomFilter.new(@size, @hashes)
   end
 
-  def insert(key)
-    @bf.insert(key)
+  def add(key)
+    @bf.add(key)
   end
-  alias []= insert
+  alias << add
+  alias []= add
 
   def include?(*keys)
     @bf.include?(*keys)
@@ -84,7 +85,7 @@ class BloomFit
   def stats
     fpr = ((1.0 - Math.exp(-(@hashes * size).to_f / @size))**@hashes) * 100
 
-    String.new.tap do |s| # rubocop: disable Style/EmptyLiteral
+    (+"").tap do |s|
       s << format("Number of filter buckets (m):  %d\n",     @size)
       s << format("Number of set bits (n):        %d\n",     set_bits)
       s << format("Number of filter hashes (k):   %d\n",     @hashes)
