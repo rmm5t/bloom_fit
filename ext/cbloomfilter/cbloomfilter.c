@@ -99,7 +99,7 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
 
     bf = bf_ptr(self);
 
-    /* default = Fugou approach :-) */
+    /* defaults */
     arg1 = INT2FIX(1000);
     arg2 = INT2FIX(4);
 
