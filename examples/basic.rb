@@ -5,7 +5,7 @@ require "bloom_fit"
 WORDS = %w(duck penguin bear panda).freeze
 TEST = %w(penguin moose racooon).freeze
 
-bf = BloomFit.new(size: 1000, hashes: 2)
+bf = BloomFit.new(capacity: 40)
 
 WORDS.each { |w| bf.add(w) }
 TEST.each do |w|
@@ -19,8 +19,7 @@ puts bf.stats
 # moose: false
 # racooon: false
 
-# Number of filter buckets (m): 1000
-# Number of bits per buckets (b): 1
-# Number of set bits (n): 8
-# Number of filter hashes (k) : 2
-# Predicted false positive rate = 0.03%
+# Number of filter buckets (m):  576
+# Number of set bits (n):        39
+# Number of filter hashes (k):   10
+# Predicted false positive rate: 0.08%

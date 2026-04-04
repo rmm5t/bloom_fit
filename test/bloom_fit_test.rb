@@ -3,6 +3,28 @@ require "test_helper"
 class BloomFitTest < Minitest::Spec
   subject { BloomFit.new(size: 100, hashes: 4) }
 
+  describe ".new" do
+    it "accepts size and hashes override" do
+      bf = BloomFit.new(size: 10, hashes: 1)
+      assert_equal 10, bf.size
+      assert_equal 1, bf.hashes
+    end
+
+    it "has default capacity and false positive-rate" do
+      bf = BloomFit.new
+      # https://hur.st/bloomfilter/?n=100&p=0.001&m=&k=
+      assert_equal 1438, bf.size
+      assert_equal 10, bf.hashes
+    end
+
+    it "calculates size and hashes given a capacity and false postiive rate" do
+      bf = BloomFit.new(capacity: 10_000, false_positive_rate: 0.0001)
+      # https://hur.st/bloomfilter/?n=10000&p=0.0001&m=&k=
+      assert_equal 191_702, bf.size
+      assert_equal 14, bf.hashes
+    end
+  end
+
   describe "#empty?" do
     it "returns true when nothing set" do
       assert_equal true, subject.empty? # rubocop:disable Minitest/AssertTruthy
