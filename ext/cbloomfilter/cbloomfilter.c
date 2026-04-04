@@ -17,8 +17,7 @@ static unsigned int *salts = crc_table;
 static VALUE cBloomFilter;
 
 struct BloomFilter {
-    int m; /* # of buckets in a bloom filter */
-    int b; /* # of bits in a bloom filter bucket */
+    int m; /* # of bits in a bloom filter */
     int k; /* # of hash functions */
     unsigned char *ptr; /* bits data */
     int bytes; /* size of byte data */
@@ -72,7 +71,6 @@ static VALUE bf_alloc(VALUE klass) {
     VALUE obj = TypedData_Make_Struct(klass, struct BloomFilter, &bf_type, bf);
 
     bf->m = 0;
-    bf->b = 0;
     bf->k = 0;
     bf->ptr = NULL;
     bf->bytes = 0;
@@ -80,52 +78,24 @@ static VALUE bf_alloc(VALUE klass) {
     return obj;
 }
 
-void bucket_unset(struct BloomFilter *bf, int index) {
-    int byte_offset = (index * bf->b) / 8;
-    int bit_offset = (index * bf->b) % 8;
-    unsigned int c = bf->ptr[byte_offset];
-    c += bf->ptr[byte_offset + 1] << 8;
-    unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
-    if ((c & mask) == 0) {
-      // do nothing
-    } else {
-        // reduce the counter: 11 00 => 10 00 (suppose bf->b is 2)
-        c -= (1 << bit_offset) & ((1 << 8) -1);
-        // shift the bitmap right by 1 bit: 10 00 => 01 00
-        c = (~mask & c) | ((c & mask) >> (bit_offset + 1) << bit_offset);
+static void bucket_set(struct BloomFilter *bf, int index) {
+    int byte_offset = index / 8;
+    int bit_offset = index % 8;
 
-        bf->ptr[byte_offset] = c & ((1 << 8) - 1);
-        bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
-    }
+    bf->ptr[byte_offset] |= (unsigned char) (1U << bit_offset);
 }
 
-void bucket_set(struct BloomFilter *bf, int index) {
-    int byte_offset = (index * bf->b) / 8;
-    int bit_offset = (index * bf->b) % 8;
-    unsigned int c = bf->ptr[byte_offset];
-    c += bf->ptr[byte_offset + 1] << 8;
-    unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
-    if ((c & mask) != mask) {
-        c = (c + ((1 << bit_offset) & ((1 << 8) -1))) | c;
-        bf->ptr[byte_offset] = c & ((1 << 8) - 1);
-        bf->ptr[byte_offset + 1] = (c & ((1 << 16) - 1)) >> 8;
-    }
-}
+static int bucket_check(struct BloomFilter *bf, int index) {
+    int byte_offset = index / 8;
+    int bit_offset = index % 8;
 
-int bucket_check(struct BloomFilter *bf, int index) {
-    int byte_offset = (index * bf->b) / 8;
-    int bit_offset = (index * bf->b) % 8;
-    unsigned int c = bf->ptr[byte_offset];
-    c += bf->ptr[byte_offset + 1] << 8;
-
-    unsigned int mask = ((1 << bf->b) - 1) << bit_offset;
-    return (c & mask) >> bit_offset;
+    return (bf->ptr[byte_offset] >> bit_offset) & 1;
 }
 
 static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2;
-    int m, k, b;
+    int m, k;
 
     bf = bf_ptr(self);
 
@@ -143,21 +113,20 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
 
     m = FIX2INT(arg1);
     k = FIX2INT(arg2);
-    b = 1;
 
     if (m < 1)
         rb_raise(rb_eArgError, "array size");
     if (k < 1)
         rb_raise(rb_eArgError, "hash length");
 
-    bf->b = b;
     bf->m = m;
     bf->k = k;
 
     ruby_xfree(bf->ptr);
     bf->ptr = NULL;
     bf->bytes = 0;
-    bf->bytes = ((m * b) + 15) / 8;
+    /* Preserve the existing serialized bitmap length, including one padding byte. */
+    bf->bytes = (m + 15) / 8;
     bf->ptr = ALLOC_N(unsigned char, bf->bytes);
 
     /* initialize the bits with zeros */
@@ -323,7 +292,6 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
-    /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "add", bf_add, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, 1);
     rb_define_method(cBloomFilter, "clear", bf_clear, 0);
