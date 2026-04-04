@@ -8,7 +8,7 @@ n = 100_000
 
 # Expecting 0.0001 false-positive
 # See: https://hur.st/bloomfilter/?n=100000&p=.0001&m=&k=
-bf = BloomFit.new(size: 1_917_012, hashes: 14)
+bf = BloomFit.new(capacity: 100_000, false_positive_rate: 0.0001)
 bf << "exists"
 
 Benchmark.bm do |x|
@@ -32,74 +32,64 @@ Benchmark.bm do |x|
 end
 
 puts
-puts "false-positive checks - constant adds; constant checks:"
+puts "EXPECTED FALSE-POSITIVE RATES:  0.0001"
+
+puts
+puts "Constant length adds"
 bf.clear
-c = 0
 n.times do
   bf << Random.alphanumeric(64)
 end
+
+puts "Constant length checks"
+c = 0
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(64))
 end
-puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+printf "  false-positive rate:          %.6f\n", (c.to_f / n)
+
+puts "Variable length checks"
+c = 0
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
+end
+printf " false-positive rate:           %.6f\n", (c.to_f / n)
 
 # ----------------------------------------
 
 puts
-puts "false-positive checks - variable adds; constant checks:"
+puts "Variable length adds"
 bf.clear
-c = 0
 n.times do
   bf << Random.alphanumeric(rand(20..512))
 end
+
+puts "Constant length checks"
+c = 0
 n.times do
   c += 1 if bf.include?(Random.alphanumeric(64))
 end
-puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+printf "  false-positive rate:          %.6f\n", (c.to_f / n)
+
+puts "Variable length checks"
+c = 0
+n.times do
+  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
+end
+printf "  false-positive rate:          %.6f\n", (c.to_f / n)
 
 # ----------------------------------------
 
 puts
-puts "false-positive checks - constant adds and variable checks:"
+puts "8x uuid adds"
 bf.clear
-c = 0
-n.times do
-  bf << Random.alphanumeric(64)
-end
-n.times do
-  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
-end
-puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
-
-# ----------------------------------------
-
-puts
-puts "false-positive checks - variable adds; variable checks:"
-bf.clear
-c = 0
-n.times do
-  bf << Random.alphanumeric(rand(20..512))
-end
-n.times do
-  c += 1 if bf.include?(Random.alphanumeric(rand(20..512)))
-end
-puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
-
-# # ----------------------------------------
-
-puts
-puts "false-positive checks - 8x uuid adds; 8x uuid checks:"
-bf.clear
-c = 0
 n.times do
   bf << (Random.uuid * 8)
 end
+
+puts "8x uuid checks"
+c = 0
 n.times do
   c += 1 if bf.include?(Random.uuid * 8)
 end
-puts   "expected false-positive rate:  0.0001"
-printf "actual false-positive rate:    %.6f\n", (c.to_f / n)
+printf "  false-positive rate:          %.6f\n", (c.to_f / n)

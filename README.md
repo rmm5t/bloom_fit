@@ -12,18 +12,22 @@ It gives you a compact, Set-like API for probabilistic membership checks:
 - false negatives are not, as long as a value was added to the same filter
 - individual values cannot be deleted safely because the filter is non-counting
 
-BloomFit is heavily inspired by [bloomfilter-rb]'s native implementation and the original C implementation by Tatsuya Mori. This version uses a DJB2 hash with salts from the CRC table and wraps the native filter in a Ruby-friendly API. This is an improvement over bloomfilter-rb in the following ways:
+BloomFit is heavily inspired by [bloomfilter-rb]'s native implementation and the original C implementation by Tatsuya Mori. This version uses a DJB2 hash with salts from the CRC table and wraps the native filter in a Ruby-friendly API. The most common way to use it is to pass an expected `capacity` and optional `false_positive_rate`, then let BloomFit calculate `size` and `hashes` for you.
+
+Compared with bloomfilter-rb, BloomFit:
 
 - uses DJB2 over CRC32 yielding better hash distribution
 - improves performance for very large datasets
 - avoids the need to supply a seed
-- automatically calculates the bit size (m) and the number of hashes (k) when given a capacity and false-positive-rate
+- automatically calculates the filter size (`m`) and hash count (`k`) from capacity and false-positive rate
 
 ## Features
 
 - native `CBloomFilter` implementation for MRI Ruby
+- automatic sizing from `capacity` and `false_positive_rate`
 - small Ruby API with familiar methods like `add`, `include?`, `merge`, `|`, and `&`
 - supports strings, symbols, integers, booleans, and other values that can be converted with `to_s`
+- manual `size` / `hashes` overrides when you want control
 - save and reload filters with Ruby `Marshal`
 - inspect filter state with `stats`, `to_hex`, `to_binary`, and `bitmap`
 
@@ -46,7 +50,7 @@ require "bloom_fit"
 ```ruby
 require "bloom_fit"
 
-filter = BloomFit.new(size: 10_000, hashes: 6)
+filter = BloomFit.new(capacity: 250, false_positive_rate: 0.001)
 
 filter.add("cat")
 filter << :dog
@@ -63,21 +67,42 @@ filter["ant"]          # => false
 
 filter.empty?          # => false
 
+filter.size            # => 3595
+filter.hashes          # => 10
+
 filter.clear
 filter.empty?          # => true
 ```
 
 `#include?`, `#key?`, and `#[]` are aliases. `#add` and `#<<` are also aliases.
 
-## Choosing `size` and `hashes`
+## Automatic Sizing
 
-BloomFit currently expects explicit `size` and `hashes` values when you create a filter:
+BloomFit now calculates `size` and `hashes` for you when you initialize it with an expected capacity:
 
 ```ruby
-filter = BloomFit.new(size: 95_851, hashes: 7)
+filter = BloomFit.new(capacity: 10_000, false_positive_rate: 0.01)
+
+filter.size   # => 95851
+filter.hashes # => 7
 ```
 
-If you want to size a filter from an expected number of inserts and a target false-positive rate, use the standard Bloom filter formulas:
+The defaults are a good starting point for many small filters:
+
+```ruby
+filter = BloomFit.new
+
+filter.size   # => 1438
+filter.hashes # => 10
+```
+
+That is equivalent to:
+
+```ruby
+filter = BloomFit.new(capacity: 100, false_positive_rate: 0.001)
+```
+
+Internally BloomFit uses the standard Bloom filter formulas:
 
 ```text
 m = -(n * ln(p)) / (ln(2)^2)
@@ -89,16 +114,26 @@ k = (m / n) * ln(2)
 - `m`: number of filter buckets (`size`)
 - `k`: number of hash functions (`hashes`)
 
-For example, if you expect about `10_000` inserts and can tolerate a `1%` false-positive rate, a good starting point is `size: 95_851` and `hashes: 7`.
+For example, if you expect about `10_000` inserts and can tolerate a `1%` false-positive rate, BloomFit will calculate `size: 95_851` and `hashes: 7` for you.
 
 If you prefer a calculator, see [Bloom Filter Calculator](https://hur.st/bloomfilter/).
+
+## Manual Sizing
+
+If you already know the exact filter width and hash count you want, you can still pass them directly:
+
+```ruby
+filter = BloomFit.new(size: 95_851, hashes: 7)
+```
+
+This bypasses automatic sizing.
 
 ## Common Operations
 
 ### Add and check membership
 
 ```ruby
-filter = BloomFit.new(size: 1_000, hashes: 4)
+filter = BloomFit.new(capacity: 100)
 
 filter << "cat"
 filter << "dog"
@@ -110,7 +145,7 @@ filter.include?("bird") # => false
 ### Use hash-like syntax for truthy values
 
 ```ruby
-filter = BloomFit.new(size: 256, hashes: 4)
+filter = BloomFit.new(capacity: 64)
 
 filter[:cat] = true
 filter[:dog] = false
@@ -129,10 +164,10 @@ When merging a hash, only keys with truthy values are added.
 ### Merge, union, and intersection
 
 ```ruby
-pets = BloomFit.new(size: 64, hashes: 3)
+pets = BloomFit.new(capacity: 50)
 pets << "cat" << "dog"
 
-more_pets = BloomFit.new(size: 64, hashes: 3)
+more_pets = BloomFit.new(capacity: 50)
 more_pets << "dog" << "bird"
 
 combined = pets | more_pets
@@ -146,16 +181,18 @@ overlap.include?("cat")   # => false
 `#merge` also accepts arrays, sets, and other enumerables:
 
 ```ruby
-filter = BloomFit.new(size: 1_000, hashes: 4)
+filter = BloomFit.new(capacity: 100)
 filter.merge(%w[cat dog bird])
 ```
 
 Filters can only be combined when they have the same `size` and `hashes`. Otherwise BloomFit raises `BloomFit::ConfigurationMismatch`.
 
+When you create filters with automatic sizing, use the same `capacity` and `false_positive_rate` for filters you plan to merge, union, or intersect.
+
 ### Save and load filters
 
 ```ruby
-filter = BloomFit.new(size: 1_000, hashes: 4)
+filter = BloomFit.new(capacity: 100)
 filter << "cat" << "dog"
 filter.save("pets.bloom")
 
@@ -183,7 +220,8 @@ filter.bitmap    # => raw bytes from the native filter
 
 | Method | Notes |
 | --- | --- |
-| `BloomFit.new(size:, hashes:)` | Creates an empty filter. Defaults to `size: 1000`, `hashes: 4`. |
+| `BloomFit.new` or `BloomFit.new(capacity:, false_positive_rate:)` | Creates a filter and calculates `size` and `hashes` automatically. Defaults to `capacity: 100`, `false_positive_rate: 0.001`. |
+| `BloomFit.new(size:, hashes:)` | Creates a filter with explicit sizing when you want fixed parameters. |
 | `add`, `<<` | Adds a value and returns the filter. |
 | `add?` | Adds only when the value does not already appear present. |
 | `include?`, `key?`, `[]` | Probabilistic membership check. |

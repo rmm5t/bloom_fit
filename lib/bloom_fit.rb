@@ -28,6 +28,8 @@ require "bloom_fit/version"
 class BloomFit
   extend Forwardable
 
+  LN2 = Math.log(2.0).freeze
+
   # The wrapped native +CBloomFilter+ instance.
   #
   # This is mostly useful for low-level integrations and internal filter
@@ -40,9 +42,19 @@ class BloomFit
   # but the best values depend on how many keys you expect to insert and how
   # many false positives you can tolerate.
   #
+  # @param capacity [Integer] expected number of elements to store in the set
+  # @param false_positive_rate [Integer] expected number of elements to store in the set
   # @param size [Integer] number of buckets in a bloom filter
   # @param hashes [Integer] number of hash functions
-  def initialize(size: 1_000, hashes: 4)
+  def initialize(capacity: 100, false_positive_rate: 0.001, size: nil, hashes: 4)
+    if size.nil? || hashes.nil?
+      raise ArgumentError, "capacity must be > 0" unless capacity.positive?
+      raise ArgumentError, "false_positive_rate must be between 0 and 1" if false_positive_rate <= 0.0 || false_positive_rate >= 1.0
+
+      size = (-capacity.to_f * Math.log(false_positive_rate) / (LN2**2)).ceil
+      hashes = (size / capacity * LN2).ceil
+    end
+
     @bf = CBloomFilter.new(size, hashes)
   end
 
