@@ -13,7 +13,7 @@ TEST.each do |w|
 end
 
 puts
-bf.stats
+puts bf.stats
 
 # penguin: true
 # moose: false
