@@ -4,6 +4,27 @@ require "cbloomfilter"
 require "bloom_fit/configuration_mismatch"
 require "bloom_fit/version"
 
+# BloomFit is an in-memory Bloom filter with a small, Set-like API.
+#
+# Bloom filters are probabilistic membership structures: they can report false
+# positives, but they do not report false negatives for values that have been
+# added. That makes BloomFit useful for cheaply ruling out missing values
+# before doing more expensive work, while keeping memory usage low.
+#
+# The class wraps the native +CBloomFilter+ implementation in Ruby-friendly
+# methods such as +add+, +include?+, +merge+, +&+, and +|+. Instances can be
+# serialized with +save+ and reloaded with +BloomFit.load+.
+#
+# Filters can only be combined when they were created with the same +size+ and
+# +hashes+ values; otherwise +BloomFit::ConfigurationMismatch+ is raised.
+#
+#   filter = BloomFit.new(size: 10_000, hashes: 6)
+#   filter.add("cat")
+#   filter.include?("cat") # => true
+#   filter.include?("dog") # => false
+#
+# Choose +size+ and +hashes+ based on the expected number of inserts and the
+# false-positive rate you can tolerate.
 class BloomFit
   extend Forwardable
 

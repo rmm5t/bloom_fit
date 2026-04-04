@@ -3,6 +3,7 @@
 *.swp
 .rvmrc
 .DS_Store
+.yardoc
 ext/Makefile
 lib/cbloomfilter.so
 tmp
