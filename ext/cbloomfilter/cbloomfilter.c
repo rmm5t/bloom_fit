@@ -296,21 +296,6 @@ static VALUE bf_include(VALUE self, VALUE key) {
     return Qtrue;
 }
 
-static VALUE bf_to_s(VALUE self) {
-    struct BloomFilter *bf = bf_ptr(self);
-    unsigned char *ptr;
-    int i;
-    VALUE str;
-
-    str = rb_str_new(0, bf->m);
-
-    ptr = (unsigned char *) RSTRING_PTR(str);
-    for (i = 0; i < bf->m; i++)
-        *ptr++ = bucket_check(bf, i) ? '1' : '0';
-
-    return str;
-}
-
 static VALUE bf_bitmap(VALUE self) {
     struct BloomFilter *bf = bf_ptr(self);
 
@@ -346,7 +331,6 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "&", bf_and, 1);
     rb_define_method(cBloomFilter, "|", bf_or, 1);
 
-    rb_define_method(cBloomFilter, "to_s", bf_to_s, 0);
     rb_define_method(cBloomFilter, "bitmap", bf_bitmap, 0);
     rb_define_method(cBloomFilter, "load", bf_load, 1);
 

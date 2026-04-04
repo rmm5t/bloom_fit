@@ -29,6 +29,14 @@ class BloomFit
   # Returns the number of bits that are set to 1 in the filter.
   def size = @bf.set_bits
 
+  def to_hex
+    bitmap.unpack1("H*")
+  end
+
+  def to_binary
+    bitmap.unpack1("B*")
+  end
+
   def merge!(other) = @bf.merge!(other.bf)
 
   # Computes the intersection of two Bloom filters.
