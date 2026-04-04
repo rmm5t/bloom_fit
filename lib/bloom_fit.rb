@@ -22,8 +22,8 @@ class BloomFit
   alias << add
   alias []= add
 
-  def include?(*keys)
-    @bf.include?(*keys)
+  def include?(key)
+    @bf.include?(key)
   end
   alias key? include?
   alias [] include?
