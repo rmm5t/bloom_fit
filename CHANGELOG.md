@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 -
 
+## [1.0.0] - 2026-04-04
+
+- Add tests for CBloomFilter ([#15])
+- Update readme ([#16])
+- Add support for capacity and false_positive_rate ([#17])
+
 ## [0.3.1] - 2026-04-04
 
 - Add rdoc comments ([#14])
@@ -37,7 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 - Initial release based on [bloomfilter-rb](https://github.com/igrigorik/bloomfilter-rb)
 
-[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v0.3.1..HEAD
+[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v1.0.0..HEAD
+[1.0.0]: https://github.com/rmm5t/bloom_fit/compare/v0.3.1..v1.0.0
 [0.3.1]: https://github.com/rmm5t/bloom_fit/compare/v0.3.0..v0.3.1
 [0.3.0]: https://github.com/rmm5t/bloom_fit/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/rmm5t/bloom_fit/compare/v0.1.1..v0.2.0
@@ -52,3 +59,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 [#12]: https://github.com/rmm5t/bloom_fit/pull/12
 [#13]: https://github.com/rmm5t/bloom_fit/pull/13
 [#14]: https://github.com/rmm5t/bloom_fit/pull/14
+[#15]: https://github.com/rmm5t/bloom_fit/pull/15
+[#16]: https://github.com/rmm5t/bloom_fit/pull/16
+[#17]: https://github.com/rmm5t/bloom_fit/pull/17

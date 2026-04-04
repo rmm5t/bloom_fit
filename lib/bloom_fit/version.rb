@@ -1,3 +1,3 @@
 class BloomFit
-  VERSION = "0.3.1".freeze
+  VERSION = "1.0.0".freeze
 end
