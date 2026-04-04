@@ -28,8 +28,6 @@ class BloomFitTest < Minitest::Spec
 
     assert_includes bf, "test"
     refute_includes bf, "abcd"
-    assert bf.include?("test", "test1") # rubocop:disable Minitest/AssertIncludes
-    refute bf.include?("test1", "abcd") # rubocop:disable Minitest/RefuteIncludes
   end
 
   it "works with any object's to_s" do

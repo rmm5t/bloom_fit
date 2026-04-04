@@ -268,36 +268,28 @@ static VALUE bf_or(VALUE self, VALUE other) {
     return obj;
 }
 
-static VALUE bf_include(int argc, VALUE* argv, VALUE self) {
+static VALUE bf_include(VALUE self, VALUE key) {
+    VALUE skey;
     unsigned long hash;
-    int i, len, m, k;
     int index;
-    long tests_idx, vlen;
+    int i, len, m, k;
     char *ckey;
-    VALUE tests, key, skey;
-    struct BloomFilter *bf;
+    struct BloomFilter *bf = bf_ptr(self);
 
-    rb_scan_args(argc, argv, "*", &tests);
+    skey = rb_obj_as_string(key);
+    ckey = StringValuePtr(skey);
+    len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
 
-    bf = bf_ptr(self);
-    vlen = RARRAY_LEN(tests);
-    for (tests_idx = 0; tests_idx < vlen; tests_idx++) {
-        key = rb_ary_entry(tests, tests_idx);
-        skey = rb_obj_as_string(key);
-        ckey = StringValuePtr(skey);
-        len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
+    m = bf->m;
+    k = bf->k;
 
-        m = bf->m;
-        k = bf->k;
+    hash = (unsigned long) djb2(ckey, len);
+    for (i = 0; i <= k - 1; i++) {
+        index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
 
-        hash = (unsigned long) djb2(ckey, len);
-        for (i = 0; i <= k - 1; i++) {
-            index = (int) ((hash ^ salts[i]) % (unsigned int) (m));
-
-            /* check the bit at the index */
-            if (!bucket_check(bf, index)) {
-                return Qfalse; /* i.e., it is a new entry ; escape the loop */
-            }
+        /* check the bit at the index */
+        if (!bucket_check(bf, index)) {
+            return Qfalse; /* i.e., it is a new entry ; escape the loop */
         }
     }
 
@@ -348,7 +340,7 @@ void Init_cbloomfilter(void) {
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     /* rb_define_method(cBloomFilter, "s", bf_s, 0); */
     rb_define_method(cBloomFilter, "add", bf_add, 1);
-    rb_define_method(cBloomFilter, "include?", bf_include, -1);
+    rb_define_method(cBloomFilter, "include?", bf_include, 1);
     rb_define_method(cBloomFilter, "clear", bf_clear, 0);
     rb_define_method(cBloomFilter, "merge!", bf_merge, 1);
     rb_define_method(cBloomFilter, "&", bf_and, 1);
