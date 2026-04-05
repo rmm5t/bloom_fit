@@ -210,12 +210,12 @@ class BloomFit
   def stats
     fpr = ((1.0 - Math.exp(-(k * n).to_f / m))**k) * 100
 
-    (+"").tap do |s|
-      s << format("Number of filter buckets (m):  %d\n",     m)
-      s << format("Number of set bits (n):        %d\n",     n)
-      s << format("Number of filter hashes (k):   %d\n",     k)
-      s << format("Predicted false positive rate: %.2f%%\n", fpr)
-    end
+    format <<~STATS, m, n, k, fpr
+      Number of filter buckets (m):  %d
+      Number of set bits (n):        %d
+      Number of filter hashes (k):   %d
+      Predicted false positive rate: %.2f%%
+    STATS
   end
 
   # Rebuilds the filter from the serialized data returned by +marshal_dump+.
