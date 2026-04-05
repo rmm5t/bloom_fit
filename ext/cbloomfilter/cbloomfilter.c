@@ -108,6 +108,10 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
 
     bf = bf_ptr(self);
 
+    if (argc > 2) {
+        rb_error_arity(argc, 0, 2);
+    }
+
     /* defaults */
     arg1 = INT2FIX(1000);
     arg2 = INT2FIX(4);

@@ -3,6 +3,13 @@ require "test_helper"
 class CBloomFilterTest < Minitest::Spec
   subject { CBloomFilter.new }
 
+  describe ".new" do
+    it "rejects more than two arguments" do
+      error = assert_raises(ArgumentError) { CBloomFilter.new(1, 2, 3) }
+      assert_equal "wrong number of arguments (given 3, expected 0..2)", error.message
+    end
+  end
+
   describe "#m" do
     it "defaults" do
       assert_equal 1000, subject.m
