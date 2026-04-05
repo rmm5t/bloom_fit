@@ -59,6 +59,12 @@ class CBloomFilterTest < Minitest::Spec
       assert_includes subject, "bar"
       refute_includes subject, "baz"
     end
+
+    it "treats binary bytes as unsigned when hashing" do
+      bf = CBloomFilter.new(20, 4)
+      bf.add("\xFF".b)
+      assert_equal "\x00\x05\x05\x00".b, bf.bitmap
+    end
   end
 
   describe "#include?" do
