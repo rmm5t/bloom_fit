@@ -17,6 +17,11 @@ class CBloomFilterTest < Minitest::Spec
       error = assert_raises(ArgumentError) { CBloomFilter.new(-1) }
       assert_equal "bit length must be >= 1", error.message
     end
+
+    it "rejects values that overflow internal byte sizing" do
+      error = assert_raises(RangeError) { CBloomFilter.new((1 << 31) - 7) }
+      assert_equal "bit length is too large", error.message
+    end
   end
 
   describe "#k" do

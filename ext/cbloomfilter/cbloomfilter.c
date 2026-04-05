@@ -4,6 +4,7 @@
  */
 
 #include "ruby.h"
+#include <limits.h>
 #include "crc32.h"
 
 #if !defined(RSTRING_LEN)
@@ -102,6 +103,7 @@ static void bf_ensure_compatible(struct BloomFilter *bf, struct BloomFilter *oth
 static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2;
+    long m_value, k_value;
     int m, k;
 
     bf = bf_ptr(self);
@@ -118,8 +120,16 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
       break;
     }
 
-    m = FIX2INT(arg1);
-    k = FIX2INT(arg2);
+    m_value = NUM2LONG(arg1);
+    k_value = NUM2LONG(arg2);
+
+    if (m_value > INT_MAX - 15)
+        rb_raise(rb_eRangeError, "bit length is too large");
+    if (k_value > INT_MAX)
+        rb_raise(rb_eRangeError, "hash length is too large");
+
+    m = (int) m_value;
+    k = (int) k_value;
 
     if (m < 1)
         rb_raise(rb_eArgError, "bit length must be >= 1");
