@@ -92,6 +92,12 @@ static int bucket_check(struct BloomFilter *bf, int index) {
     return (bf->ptr[byte_offset] >> bit_offset) & 1;
 }
 
+static void bf_ensure_compatible(struct BloomFilter *bf, struct BloomFilter *other) {
+    if (bf->m != other->m || bf->k != other->k || bf->bytes != other->bytes) {
+        rb_raise(rb_eArgError, "bloom filters must have matching size and hash count");
+    }
+}
+
 static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2;
@@ -193,6 +199,9 @@ static VALUE bf_merge(VALUE self, VALUE other) {
     struct BloomFilter *bf = bf_ptr(self);
     struct BloomFilter *target = bf_ptr(other);
     int i;
+
+    bf_ensure_compatible(bf, target);
+
     for (i = 0; i < bf->bytes; i++) {
         bf->ptr[i] |= target->ptr[i];
     }
@@ -205,6 +214,8 @@ static VALUE bf_and(VALUE self, VALUE other) {
     struct BloomFilter *target;
     VALUE klass, obj, args[5];
     int i;
+
+    bf_ensure_compatible(bf, bf_other);
 
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
@@ -224,6 +235,8 @@ static VALUE bf_or(VALUE self, VALUE other) {
     struct BloomFilter *target;
     VALUE klass, obj, args[5];
     int i;
+
+    bf_ensure_compatible(bf, bf_other);
 
     args[0] = INT2FIX(bf->m);
     args[1] = INT2FIX(bf->k);
