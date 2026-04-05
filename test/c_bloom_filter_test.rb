@@ -12,6 +12,11 @@ class CBloomFilterTest < Minitest::Spec
       bf = CBloomFilter.new(10_000)
       assert_equal 10_000, bf.m
     end
+
+    it "rejects values less than 1" do
+      error = assert_raises(ArgumentError) { CBloomFilter.new(-1) }
+      assert_equal "bit length must be >= 1", error.message
+    end
   end
 
   describe "#k" do
@@ -22,6 +27,16 @@ class CBloomFilterTest < Minitest::Spec
     it "is set by the 2nd arg of the contructor" do
       bf = CBloomFilter.new(10_000, 9)
       assert_equal 9, bf.k
+    end
+
+    it "rejects values less than 1" do
+      error = assert_raises(ArgumentError) { CBloomFilter.new(1000, 0) }
+      assert_equal "hash length must be >= 1", error.message
+    end
+
+    it "rejects values larger than the salt table" do
+      error = assert_raises(ArgumentError) { CBloomFilter.new(10_000, 257) }
+      assert_equal "hash length must be <= 256", error.message
     end
   end
 

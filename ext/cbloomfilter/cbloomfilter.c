@@ -13,6 +13,7 @@
 
 /* Reuse the standard CRC table for consistent salts */
 static unsigned int *salts = crc_table;
+static const int salts_length = sizeof(crc_table) / sizeof(crc_table[0]);
 
 static VALUE cBloomFilter;
 
@@ -115,9 +116,11 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     k = FIX2INT(arg2);
 
     if (m < 1)
-        rb_raise(rb_eArgError, "array size");
+        rb_raise(rb_eArgError, "bit length must be >= 1");
     if (k < 1)
-        rb_raise(rb_eArgError, "hash length");
+        rb_raise(rb_eArgError, "hash length must be >= 1");
+    if (k > salts_length)
+        rb_raise(rb_eArgError, "hash length must be <= %d", salts_length);
 
     bf->m = m;
     bf->k = k;
