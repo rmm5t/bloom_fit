@@ -247,7 +247,7 @@ class BloomFitTest < Minitest::Spec
     it "raises when merge is between incompatible filters" do
       bf1 = BloomFit.new(size: 10)
       bf2 = BloomFit.new(size: 20)
-      assert_raises(BloomFit::ConfigurationMismatch) { bf1.merge(bf2) }
+      assert_raises(ArgumentError) { bf1.merge(bf2) }
     end
   end
 
@@ -285,11 +285,11 @@ class BloomFitTest < Minitest::Spec
     it "raises when intersection is between incompatible filters" do
       bf1 = BloomFit.new(size: 10)
       bf2 = BloomFit.new(size: 20)
-      assert_raises(BloomFit::ConfigurationMismatch) { bf1 & bf2 }
+      assert_raises(ArgumentError) { bf1 & bf2 }
 
       bf1 = BloomFit.new(size: 10, hashes: 2)
       bf2 = BloomFit.new(size: 10, hashes: 4)
-      assert_raises(BloomFit::ConfigurationMismatch) { bf1 & bf2 }
+      assert_raises(ArgumentError) { bf1 & bf2 }
     end
   end
 
@@ -325,7 +325,7 @@ class BloomFitTest < Minitest::Spec
     it "raises when union is between incompatible filters" do
       bf1 = BloomFit.new(size: 10)
       bf2 = BloomFit.new(size: 20)
-      assert_raises(BloomFit::ConfigurationMismatch) { bf1 | bf2 }
+      assert_raises(ArgumentError) { bf1 | bf2 }
     end
   end
 
@@ -360,7 +360,8 @@ class BloomFitTest < Minitest::Spec
       assert_includes bf2, "bar"
       refute_includes bf2, "baz"
 
-      assert subject.send(:same_parameters?, bf2)
+      assert_equal subject.size, bf2.size
+      assert_equal subject.hashes, bf2.hashes
     end
   end
 end

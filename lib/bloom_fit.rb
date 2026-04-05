@@ -1,7 +1,6 @@
 require "forwardable"
 
 require "cbloomfilter"
-require "bloom_fit/configuration_mismatch"
 require "bloom_fit/version"
 
 # BloomFit is an in-memory Bloom filter with a small, Set-like API.
@@ -16,7 +15,7 @@ require "bloom_fit/version"
 # serialized with +save+ and reloaded with +BloomFit.load+.
 #
 # Filters can only be combined when they were created with the same +size+ and
-# +hashes+ values; otherwise +BloomFit::ConfigurationMismatch+ is raised.
+# +hashes+ values; otherwise the native extension raises +ArgumentError+.
 #
 #   filter = BloomFit.new(size: 10_000, hashes: 6)
 #   filter.add("cat")
@@ -162,7 +161,6 @@ class BloomFit
   # This method mutates the receiver and mimics Set#merge.
   def merge(other)
     if other.is_a?(BloomFit)
-      raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
       @bf.merge(other.bf)
     elsif other.respond_to?(:each_key)
       other.each { |k, v| add(k) if v }
@@ -175,13 +173,12 @@ class BloomFit
 
   # Returns a new filter containing the bitwise intersection of two filters.
   #
-  # Both filters must have the same +size+ and +hashes+ values or
-  # +BloomFit::ConfigurationMismatch+ is raised.
+  # Both filters must have the same +size+ and +hashes+ values or the native
+  # extension raises +ArgumentError+.
   #
   # Like all Bloom filter operations, membership checks on the result remain
   # probabilistic and may still produce false positives.
   def &(other)
-    raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
     self.class.new(size:, hashes:).tap do |result|
       result.instance_variable_set(:@bf, @bf.&(other.bf))
     end
@@ -190,12 +187,11 @@ class BloomFit
 
   # Returns a new filter containing the bitwise union of two filters.
   #
-  # Both filters must have the same +size+ and +hashes+ values or
-  # +BloomFit::ConfigurationMismatch+ is raised.
+  # Both filters must have the same +size+ and +hashes+ values or the native
+  # extension raises +ArgumentError+.
   #
   # The receiver and +other+ are left unchanged.
   def |(other)
-    raise BloomFit::ConfigurationMismatch unless same_parameters?(other)
     self.class.new(size:, hashes:).tap do |result|
       result.instance_variable_set(:@bf, @bf.|(other.bf))
     end
@@ -246,12 +242,5 @@ class BloomFit
     File.open(filename, "w") do |f|
       f << Marshal.dump(self)
     end
-  end
-
-  protected
-
-  # Returns +true+ when +other+ has the same +size+ and +hashes+ values.
-  def same_parameters?(other)
-    bf.m == other.bf.m && bf.k == other.bf.k
   end
 end

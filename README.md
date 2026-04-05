@@ -185,7 +185,7 @@ filter = BloomFit.new(capacity: 100)
 filter.merge(%w[cat dog bird])
 ```
 
-Filters can only be combined when they have the same `size` and `hashes`. Otherwise BloomFit raises `BloomFit::ConfigurationMismatch`.
+Filters can only be combined when they have the same `size` and `hashes`. Otherwise BloomFit raises `ArgumentError`.
 
 When you create filters with automatic sizing, use the same `capacity` and `false_positive_rate` for filters you plan to merge, union, or intersect.
 

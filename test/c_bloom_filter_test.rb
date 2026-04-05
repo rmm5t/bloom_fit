@@ -82,6 +82,11 @@ class CBloomFilterTest < Minitest::Spec
       assert_includes subject, "bar"
       assert_includes subject, "baz"
     end
+
+    it "rejects incompatible filters" do
+      error = assert_raises(ArgumentError) { subject.merge(CBloomFilter.new(2000, 4)) }
+      assert_equal "bloom filters must have matching size and hash count", error.message
+    end
   end
 
   describe "#&" do
@@ -103,6 +108,11 @@ class CBloomFilterTest < Minitest::Spec
       assert_includes bf3, "bar"
       refute_includes bf3, "baz"
     end
+
+    it "rejects incompatible filters" do
+      error = assert_raises(ArgumentError) { subject & CBloomFilter.new(1000, 2) }
+      assert_equal "bloom filters must have matching size and hash count", error.message
+    end
   end
 
   describe "#|" do
@@ -123,6 +133,11 @@ class CBloomFilterTest < Minitest::Spec
       assert_includes bf3, "foo"
       assert_includes bf3, "bar"
       assert_includes bf3, "baz"
+    end
+
+    it "rejects incompatible filters" do
+      error = assert_raises(ArgumentError) { subject | CBloomFilter.new(2000, 4) }
+      assert_equal "bloom filters must have matching size and hash count", error.message
     end
   end
 
