@@ -278,7 +278,14 @@ static VALUE bf_bitmap(VALUE self) {
 
 static VALUE bf_load(VALUE self, VALUE bitmap) {
     struct BloomFilter *bf = bf_ptr(self);
-    unsigned char* ptr = (unsigned char *) RSTRING_PTR(bitmap);
+    VALUE bitmap_string = StringValue(bitmap);
+    unsigned char* ptr;
+
+    if (RSTRING_LEN(bitmap_string) != bf->bytes) {
+        rb_raise(rb_eArgError, "bitmap length must be %d bytes", bf->bytes);
+    }
+
+    ptr = (unsigned char *) RSTRING_PTR(bitmap_string);
 
     memcpy(bf->ptr, ptr, bf->bytes);
 

@@ -154,5 +154,23 @@ class CBloomFilterTest < Minitest::Spec
       assert_includes subject, "foo"
       assert_includes subject, "bar"
     end
+
+    it "rejects a short bitmap" do
+      error = assert_raises(ArgumentError) { subject.load("\x00".b) }
+      assert_equal "bitmap length must be 126 bytes", error.message
+    end
+
+    it "rejects a long bitmap" do
+      error = assert_raises(ArgumentError) { subject.load("\x00".b * 127) }
+      assert_equal "bitmap length must be 126 bytes", error.message
+    end
+
+    it "coerces bitmap-like objects to strings before loading" do
+      bitmap_data = subject.bitmap
+      bitmap = Object.new
+      bitmap.define_singleton_method(:to_str) { bitmap_data }
+      subject.load(bitmap)
+      assert_equal 0, subject.set_bits
+    end
   end
 end
