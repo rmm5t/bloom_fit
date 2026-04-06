@@ -220,5 +220,14 @@ class CBloomFilterTest < Minitest::Spec
       subject.load(bitmap)
       assert_equal 0, subject.set_bits
     end
+
+    it "clears loaded padding bits beyond the configured size" do
+      bf = CBloomFilter.new(20, 4)
+
+      bf.load("\x00\x00\xF0\xFF".b)
+
+      assert_equal 0, bf.set_bits
+      assert_equal "\x00\x00\x00\x00".b, bf.bitmap
+    end
   end
 end
