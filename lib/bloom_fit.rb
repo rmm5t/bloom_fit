@@ -79,15 +79,11 @@ class BloomFit
   #
   # Positive results are probabilistic and may be false positives.
 
-  # :method: clear
-  #
-  # Clears the filter by resetting all bits to +0+.
-
   # :method: set_bits
   #
   # Returns the number of bits currently set to +1+.
 
-  def_delegators :@bf, :m, :k, :bitmap, :include?, :clear, :set_bits
+  def_delegators :@bf, :m, :k, :bitmap, :include?, :set_bits
 
   # Returns the configured filter width.
   alias size m
@@ -113,6 +109,12 @@ class BloomFit
     self
   end
   alias << add
+
+  # Clears the filter by resetting all bits to +0+ and returns +self+.
+  def clear
+    @bf.clear
+    self
+  end
 
   # Adds +key+ to the filter when +value+ is truthy.
   #
@@ -169,6 +171,8 @@ class BloomFit
     else
       raise ArgumentError, "value must be enumerable or another BloomFit filter"
     end
+
+    self
   end
 
   # Returns a new filter containing the bitwise intersection of two filters.

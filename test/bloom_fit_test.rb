@@ -124,11 +124,11 @@ class BloomFitTest < Minitest::Spec
   end
 
   describe "#clear" do
-    it "zeroes the bits" do
+    it "zeroes the bits and returns self" do
       subject.add("test")
       assert_includes subject, "test"
       assert_includes subject.to_binary, "1"
-      subject.clear
+      assert_equal subject, subject.clear
       refute_includes subject, "test"
       refute_includes subject.to_binary, "1"
     end
@@ -202,14 +202,14 @@ class BloomFitTest < Minitest::Spec
   end
 
   describe "#merge" do
-    it "merges another BloomFit filter" do
+    it "merges another BloomFit filter and returns self" do
       bf1 = BloomFit.new(size: 100, hashes: 2)
       bf2 = BloomFit.new(size: 100, hashes: 2)
       bf1 << "mouse"
       bf2 << "cat" << "dog"
       refute_includes bf1, "cat"
       refute_includes bf1, "dog"
-      bf1.merge(bf2)
+      assert_equal bf1, bf1.merge(bf2)
       assert_includes bf1, "mouse"
       assert_includes bf1, "cat"
       assert_includes bf1, "dog"
@@ -218,9 +218,9 @@ class BloomFitTest < Minitest::Spec
       assert_includes bf2, "dog"
     end
 
-    it "merges an array" do
+    it "merges an array and returns self" do
       subject << "mouse"
-      subject.merge %i[cat dog]
+      assert_equal subject, subject.merge(%i[cat dog])
       assert_includes subject, "mouse"
       assert_includes subject, "cat"
       assert_includes subject, "dog"
