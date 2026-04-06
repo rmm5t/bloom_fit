@@ -100,6 +100,22 @@ static void bf_ensure_compatible(struct BloomFilter *bf, struct BloomFilter *oth
     }
 }
 
+static void bf_clear_padding_bits(struct BloomFilter *bf) {
+    int full_bytes = bf->m / 8;
+    int remaining_bits = bf->m % 8;
+    int i;
+
+    if (remaining_bits > 0) {
+        unsigned char mask = (unsigned char) ((1U << remaining_bits) - 1U);
+        bf->ptr[full_bytes] &= mask;
+        full_bytes += 1;
+    }
+
+    for (i = full_bytes; i < bf->bytes; i++) {
+        bf->ptr[i] = 0;
+    }
+}
+
 static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
     struct BloomFilter *bf;
     VALUE arg1, arg2;
@@ -317,6 +333,7 @@ static VALUE bf_load(VALUE self, VALUE bitmap) {
     ptr = (unsigned char *) RSTRING_PTR(bitmap_string);
 
     memcpy(bf->ptr, ptr, bf->bytes);
+    bf_clear_padding_bits(bf);
 
     return Qnil;
 }
