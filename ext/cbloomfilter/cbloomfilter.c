@@ -12,7 +12,6 @@
 # define RSTRING_PTR(x) (RSTRING(x)->ptr)
 #endif
 
-/* Reuse the standard CRC table for consistent salts */
 static const int salts_length = sizeof(salts) / sizeof(salts[0]);
 
 static VALUE cBloomFilter;
