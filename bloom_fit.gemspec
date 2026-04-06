@@ -3,7 +3,7 @@ require_relative "lib/bloom_fit/version"
 Gem::Specification.new do |spec|
   authors = {
     "Ryan McGeary"        => "ryan@mcgeary.org",
-    "Beshad Talayeminaei" => "btalayeminaei@gmail.com ",
+    "Beshad Talayeminaei" => "btalayeminaei@gmail.com",
     "Ilya Grigorik"       => "ilya@grigorik.com",
     "Tatsuya Mori"        => "valdzone@gmail.com",
   }
