@@ -340,6 +340,19 @@ class BloomFitTest < Minitest::Spec
       STATS
       assert_equal expected, bf.stats
     end
+
+    it "estimates false positives from the current fill level" do
+      bf = BloomFit.new(size: 10, hashes: 3)
+      bf.bf.load("\x07\x00\x00".b)
+
+      expected = <<~STATS
+        Number of filter buckets (m):  10
+        Number of set bits (n):        3
+        Number of filter hashes (k):   3
+        Predicted false positive rate: 2.70%
+      STATS
+      assert_equal expected, bf.stats
+    end
   end
 
   describe "serialization" do

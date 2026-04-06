@@ -208,7 +208,7 @@ class BloomFit
   # bits (+n+), the hash count (+k+), and the predicted false-positive rate
   # based on the current fill level.
   def stats
-    fpr = ((1.0 - Math.exp(-(k * n).to_f / m))**k) * 100
+    fpr = ((n.to_f / m)**k) * 100
 
     format <<~STATS, m, n, k, fpr
       Number of filter buckets (m):  %d

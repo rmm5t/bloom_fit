@@ -22,4 +22,4 @@ puts bf.stats
 # Number of filter buckets (m):  576
 # Number of set bits (n):        39
 # Number of filter hashes (k):   10
-# Predicted false positive rate: 0.08%
+# Predicted false positive rate: 0.00%
