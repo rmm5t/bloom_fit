@@ -5,7 +5,7 @@
 
 #include "ruby.h"
 #include <limits.h>
-#include "crc32.h"
+#include "salts.h"
 
 #if !defined(RSTRING_LEN)
 # define RSTRING_LEN(x) (RSTRING(x)->len)
@@ -13,8 +13,7 @@
 #endif
 
 /* Reuse the standard CRC table for consistent salts */
-static unsigned int *salts = crc_table;
-static const int salts_length = sizeof(crc_table) / sizeof(crc_table[0]);
+static const int salts_length = sizeof(salts) / sizeof(salts[0]);
 
 static VALUE cBloomFilter;
 
