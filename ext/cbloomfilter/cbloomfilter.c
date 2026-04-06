@@ -191,12 +191,18 @@ static VALUE bf_k(VALUE self) {
 
 static VALUE bf_set_bits(VALUE self){
     struct BloomFilter *bf = bf_ptr(self);
-    int i,j,count = 0;
+    int i, count = 0;
+
     for (i = 0; i < bf->bytes; i++) {
-        for (j = 0; j < 8; j++) {
-            count += (bf->ptr[i] >> j) & 1;
+        unsigned char byte = bf->ptr[i];
+
+        /* Brian Kernighan’s bit-count loop a*/
+        while (byte != 0) {
+            byte &= (unsigned char) (byte - 1);
+            count++;
         }
     }
+
     return INT2FIX(count);
 }
 
