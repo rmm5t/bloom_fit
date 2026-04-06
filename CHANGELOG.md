@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 -
 
+## [1.1.1] - 2026-04-06
+
+- Switch salts from unsigned longs to unsigned ints
+- Update gemspec summary
+
 ## [1.1.0] - 2026-04-05
 
 - Improve CBloomFilter safety checks for invalid bitmap loads, oversized hash counts, oversized bit lengths, and extra initializer args
@@ -54,7 +59,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 - Initial release based on [bloomfilter-rb](https://github.com/igrigorik/bloomfilter-rb)
 
-[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v1.1.0..HEAD
+[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v1.1.1..HEAD
+[1.1.1]: https://github.com/rmm5t/bloom_fit/compare/v1.1.0..v1.1.1
 [1.1.0]: https://github.com/rmm5t/bloom_fit/compare/v1.0.0..v1.1.0
 [1.0.0]: https://github.com/rmm5t/bloom_fit/compare/v0.3.1..v1.0.0
 [0.3.1]: https://github.com/rmm5t/bloom_fit/compare/v0.3.0..v0.3.1
