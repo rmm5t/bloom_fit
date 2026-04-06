@@ -1,5 +1,6 @@
 /*
  *   cbloomfilter.c - simple Bloom Filter
+ *   (c) Ryan McGeary https://github.com/rmm5t/
  *   (c) Tatsuya Mori <valdzone@gmail.com>
  */
 
