@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.authors  = authors.keys
   spec.email    = authors.values
   spec.homepage = "https://github.com/#{username}/#{spec.name}"
-  spec.summary  = "BloomFit helps you build correctly sized Bloom filters from expected set size and target false positive rate."
+  spec.summary  = "Bloom filters for Ruby with automatic sizing and a fast native in-memory core, with a small, Set-like API."
 
   spec.metadata = {
     "homepage_uri"          => spec.homepage,
