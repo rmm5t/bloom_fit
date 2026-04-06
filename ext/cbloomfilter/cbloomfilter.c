@@ -154,7 +154,6 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
 
     /* initialize the bits with zeros */
     memset(bf->ptr, 0, bf->bytes);
-    rb_iv_set(self, "@hash_value", rb_hash_new());
 
     return self;
 }
