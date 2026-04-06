@@ -234,13 +234,11 @@ class BloomFit
   # The file is read using Ruby's +Marshal+ format, so it should only be used
   # with trusted input.
   def self.load(filename)
-    Marshal.load(File.open(filename, "r")) # rubocop:disable Security/MarshalLoad
+    Marshal.load(File.binread(filename)) # rubocop:disable Security/MarshalLoad
   end
 
   # Writes the filter to +filename+ using Ruby's +Marshal+ format.
   def save(filename)
-    File.open(filename, "w") do |f|
-      f << Marshal.dump(self)
-    end
+    File.binwrite(filename, Marshal.dump(self))
   end
 end

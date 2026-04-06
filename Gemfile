@@ -11,4 +11,5 @@ gem "rubocop-pragmatic"
 
 gem "minitest"
 gem "minitest-matchers_vaccine"
+gem "minitest-mock"
 gem "minitest-reporters"
