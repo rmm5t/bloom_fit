@@ -29,6 +29,8 @@ Gem::Specification.new do |spec|
   spec.files = Dir.glob("{app,exe,ext,lib,test,spec}/**/*") + Dir.glob("{LICENSE,README}*")
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "msgpack", "~> 1.0"
+
   spec.required_ruby_version = ">= 3.2.0"
 
   spec.extensions = ["ext/cbloomfilter/extconf.rb"]

@@ -1,4 +1,5 @@
 require "forwardable"
+require "msgpack"
 
 require "cbloomfilter"
 require "bloom_fit/version"
@@ -233,16 +234,27 @@ class BloomFit
     [size, hashes, bitmap]
   end
 
-  # Loads a filter from a file previously written by +save+.
-  #
-  # The file is read using Ruby's +Marshal+ format, so it should only be used
-  # with trusted input.
-  def self.load(filename)
-    Marshal.load(File.binread(filename)) # rubocop:disable Security/MarshalLoad
+  # Rebuilds a filter from the serialized data returned by +to_msgpack+.
+  def self.unpack(msg)
+    BloomFit.allocate.tap do |bf|
+      bf.marshal_load(MessagePack.unpack(msg))
+    end
   end
 
-  # Writes the filter to +filename+ using Ruby's +Marshal+ format.
+  # Returns the data to serialize this filter in msgpack format.
+  def to_msgpack
+    MessagePack.pack(marshal_dump)
+  end
+
+  # Loads a filter from a file previously written by +save+.
+  #
+  # The file is read using msgpack format.
+  def self.load(filename)
+    unpack(File.binread(filename))
+  end
+
+  # Writes the filter to +filename+ using msgpack format.
   def save(filename)
-    File.binwrite(filename, Marshal.dump(self))
+    File.binwrite(filename, to_msgpack)
   end
 end

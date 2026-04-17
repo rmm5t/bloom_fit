@@ -358,13 +358,22 @@ class BloomFitTest < Minitest::Spec
   describe "serialization" do
     after { FileUtils.rm_f("bf.out") }
 
-    it "marshalls" do
+    it "packs and unpacks" do
+      bf = BloomFit.new(size: 111, hashes: 5)
+      msg = bf.to_msgpack
+      bf2 = BloomFit.unpack(msg)
+      assert_equal 111, bf2.size
+      assert_equal 5, bf2.hashes
+      assert_empty bf2
+    end
+
+    it "saves" do
       bf = BloomFit.new
       assert bf.save("bf.out")
     end
 
     it "uses binary file io" do
-      dumped = Marshal.dump(subject)
+      dumped = subject.to_msgpack
       writer = Minitest::Mock.new
       writer.expect(:call, dumped.bytesize, ["bf.out", dumped])
 
@@ -385,7 +394,7 @@ class BloomFitTest < Minitest::Spec
       reader.verify
     end
 
-    it "loads from marshalled" do
+    it "loads" do
       subject.add("foo")
       subject.add("bar")
       subject.save("bf.out")
