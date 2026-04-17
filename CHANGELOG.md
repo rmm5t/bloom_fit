@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 -
 
+## [1.2.0] - 2026-04-16
+
+- Switch `BloomFit.dump` and `BloomFit.load` to MessagePack by default instead of Marshal ([#29])
+- Update docs and README to cover the MessagePack serialization format
+
 ## [1.1.1] - 2026-04-06
 
 - Switch salts from unsigned longs to unsigned ints
@@ -59,7 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 
 - Initial release based on [bloomfilter-rb](https://github.com/igrigorik/bloomfilter-rb)
 
-[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v1.1.1..HEAD
+[Unreleased]: https://github.com/rmm5t/bloom_fit/compare/v1.2.0..HEAD
+[1.2.0]: https://github.com/rmm5t/bloom_fit/compare/v1.1.1..v1.2.0
 [1.1.1]: https://github.com/rmm5t/bloom_fit/compare/v1.1.0..v1.1.1
 [1.1.0]: https://github.com/rmm5t/bloom_fit/compare/v1.0.0..v1.1.0
 [1.0.0]: https://github.com/rmm5t/bloom_fit/compare/v0.3.1..v1.0.0
@@ -91,3 +97,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 [#26]: https://github.com/rmm5t/bloom_fit/pull/26
 [#27]: https://github.com/rmm5t/bloom_fit/pull/27
 [#28]: https://github.com/rmm5t/bloom_fit/pull/28
+[#29]: https://github.com/rmm5t/bloom_fit/pull/29
