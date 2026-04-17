@@ -28,7 +28,7 @@ Compared with bloomfilter-rb, BloomFit:
 - small Ruby API with familiar methods like `add`, `include?`, `merge`, `|`, and `&`
 - supports strings, symbols, integers, booleans, and other values that can be converted with `to_s`
 - manual `size` / `hashes` overrides when you want control
-- save and reload filters with Ruby `Marshal`
+- serialize filters with msgpack via `to_msgpack`, `BloomFit.unpack`, `save`, and `BloomFit.load`
 - inspect filter state with `stats`, `to_hex`, `to_binary`, and `bitmap`
 
 ## Requirements
@@ -201,7 +201,21 @@ reloaded.include?("cat") # => true
 reloaded.include?("dog") # => true
 ```
 
-Persistence uses Ruby `Marshal`. Only load files you trust.
+Persistence uses msgpack, not Ruby `Marshal`.
+
+If you want the serialized bytes directly instead of writing a file:
+
+```ruby
+filter = BloomFit.new(capacity: 100)
+filter << "cat"
+
+payload = filter.to_msgpack
+copy = BloomFit.unpack(payload)
+
+copy.include?("cat") # => true
+```
+
+The msgpack payload stores the filter `size`, `hashes`, and raw bitmap.
 
 ### Inspect the bitmap
 
@@ -236,7 +250,8 @@ filter.bitmap    # => raw bytes from the native filter
 | `set_bits`, `n` | Returns the number of bits currently set. |
 | `stats` | Returns a human-readable summary including predicted false-positive rate. |
 | `to_hex`, `to_binary`, `bitmap` | Returns the filter bitmap in different representations. |
-| `save`, `BloomFit.load` | Serializes and restores a filter with Ruby `Marshal`. |
+| `to_msgpack`, `BloomFit.unpack` | Serializes and restores a filter as msgpack bytes. |
+| `save`, `BloomFit.load` | Persists and restores a filter using the same msgpack format. |
 
 ## Resources
 

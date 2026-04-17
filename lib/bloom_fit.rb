@@ -13,7 +13,8 @@ require "bloom_fit/version"
 #
 # The class wraps the native +CBloomFilter+ implementation in Ruby-friendly
 # methods such as +add+, +include?+, +merge+, +&+, and +|+. Instances can be
-# serialized with +save+ and reloaded with +BloomFit.load+.
+# serialized to msgpack with +to_msgpack+ or persisted to disk with +save+ and
+# later restored with +BloomFit.unpack+ or +BloomFit.load+.
 #
 # Filters can only be combined when they were created with the same +size+ and
 # +hashes+ values; otherwise the native extension raises +ArgumentError+.
@@ -235,25 +236,35 @@ class BloomFit
   end
 
   # Rebuilds a filter from the serialized data returned by +to_msgpack+.
+  #
+  # The payload stores +size+, +hashes+, and the raw bitmap in msgpack format,
+  # making it suitable for compact transport or persistence outside Ruby's
+  # +Marshal+.
   def self.unpack(msg)
     BloomFit.allocate.tap do |bf|
       bf.marshal_load(MessagePack.unpack(msg))
     end
   end
 
-  # Returns the data to serialize this filter in msgpack format.
+  # Returns this filter serialized in msgpack format.
+  #
+  # The encoded payload contains the same three values as +marshal_dump+:
+  # +size+, +hashes+, and the raw bitmap.
   def to_msgpack
     MessagePack.pack(marshal_dump)
   end
 
   # Loads a filter from a file previously written by +save+.
   #
-  # The file is read using msgpack format.
+  # The file contents are decoded from msgpack.
   def self.load(filename)
     unpack(File.binread(filename))
   end
 
   # Writes the filter to +filename+ using msgpack format.
+  #
+  # This produces a compact binary payload that can be restored with
+  # +BloomFit.load+.
   def save(filename)
     File.binwrite(filename, to_msgpack)
   end
