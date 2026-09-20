@@ -154,10 +154,15 @@ class BloomFit
 
   # Returns the bitmap as a binary string of +0+ and +1+ characters.
   #
-  # The output is truncated to the configured filter width, so it omits any
-  # trailing padding present in the native bitmap.
+  # Complete bytes are rendered most-significant-bit first. Only the valid
+  # low-order bits of the final partial byte are included, yielding exactly
+  # +size+ bits without padding.
   def to_binary
-    bitmap.unpack1("B*")[0...size]
+    full_bytes, remaining_bits = size.divmod(8)
+    binary = bitmap.unpack1("B*")
+    result = binary[0, full_bytes * 8]
+    result << binary[((full_bytes + 1) * 8) - remaining_bits, remaining_bits] if remaining_bits.positive?
+    result
   end
 
   # Merges another filter or collection of keys into this filter.
