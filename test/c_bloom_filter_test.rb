@@ -10,6 +10,128 @@ class CBloomFilterTest < Minitest::Spec
     end
   end
 
+  %i[dup clone].each do |copy_method|
+    describe "##{copy_method}" do
+      subject { CBloomFilter.new(111, 5) }
+
+      it "preserves the dimensions, bitmap, and membership" do
+        ["foo", "bar", "\x00\xFF".b].each { |key| subject.add(key) }
+        copy = subject.public_send(copy_method)
+
+        refute_same subject, copy
+        assert_equal 111, copy.m
+        assert_equal 5, copy.k
+        assert_equal subject.bitmap, copy.bitmap
+        assert_equal subject.set_bits, copy.set_bits
+        assert_includes copy, "foo"
+        assert_includes copy, "bar"
+        assert_includes copy, "\x00\xFF".b
+      end
+
+      it "isolates changes to the copy from the original" do
+        subject.add("foo")
+        bitmap = subject.bitmap
+        copy = subject.public_send(copy_method)
+
+        copy.clear
+        assert_equal 0, copy.set_bits
+        assert_equal bitmap, subject.bitmap
+
+        copy.add("bar")
+        assert_predicate copy.set_bits, :positive?
+        assert_includes copy, "bar"
+        assert_equal bitmap, subject.bitmap
+      end
+
+      it "isolates changes to the original from the copy" do
+        subject.add("foo")
+        bitmap = subject.bitmap
+        copy = subject.public_send(copy_method)
+
+        subject.clear
+        subject.add("bar")
+        assert_equal bitmap, copy.bitmap
+        assert_includes copy, "foo"
+      end
+
+      it "independently copies an empty filter" do
+        copy = subject.public_send(copy_method)
+        assert_equal 0, copy.set_bits
+
+        copy.add("foo")
+        assert_predicate copy.set_bits, :positive?
+        assert_equal 0, subject.set_bits
+      end
+
+      it "preserves subclasses and their instance variables" do
+        klass = Class.new(CBloomFilter) do
+          attr_reader :label
+
+          def initialize(label)
+            @label = label
+            super(111, 5)
+          end
+        end
+        original = klass.new("label")
+        original.add("foo")
+        copy = original.public_send(copy_method)
+
+        assert_instance_of klass, copy
+        assert_equal "label", copy.label
+        assert_equal original.bitmap, copy.bitmap
+        copy.clear
+        assert_includes original, "foo"
+      end
+    end
+  end
+
+  describe "copying frozen filters" do
+    it "preserves Ruby's dup and clone frozen-state behavior" do
+      subject.add("foo")
+      subject.freeze
+
+      copy = subject.dup
+      refute_predicate copy, :frozen?
+      assert_predicate subject.clone, :frozen?
+      refute_predicate subject.clone(freeze: false), :frozen?
+      assert_equal subject.bitmap, copy.bitmap
+      copy.clear
+      assert_includes subject, "foo"
+    end
+  end
+
+  describe "#initialize_copy" do
+    it "can replace an existing filter's dimensions and bitmap" do
+      source = CBloomFilter.new(111, 5)
+      source.add("foo")
+      subject.add("bar")
+
+      assert_same subject, subject.send(:initialize_copy, source)
+      assert_equal 111, subject.m
+      assert_equal 5, subject.k
+      assert_equal source.bitmap, subject.bitmap
+      subject.clear
+      assert_includes source, "foo"
+    end
+
+    it "leaves the bitmap intact when copying itself" do
+      subject.add("foo")
+      bitmap = subject.bitmap
+
+      assert_same subject, subject.send(:initialize_copy, subject)
+      assert_equal bitmap, subject.bitmap
+    end
+
+    it "rejects a different object type" do
+      assert_raises(TypeError) { subject.send(:initialize_copy, Object.new) }
+    end
+
+    it "rejects replacing a frozen receiver" do
+      subject.freeze
+      assert_raises(FrozenError) { subject.send(:initialize_copy, CBloomFilter.new) }
+    end
+  end
+
   describe "#m" do
     it "defaults" do
       assert_equal 1000, subject.m

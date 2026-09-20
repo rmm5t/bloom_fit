@@ -88,6 +88,94 @@ class BloomFitTest < Minitest::Spec
     end
   end
 
+  %i[dup clone].each do |copy_method|
+    describe "##{copy_method}" do
+      subject { BloomFit.new(size: 111, hashes: 5) }
+
+      it "preserves the dimensions, membership, and serialized bytes" do
+        subject.merge(["foo", "bar", "\x00\xFF".b])
+        payload = subject.to_msgpack
+        copy = subject.public_send(copy_method)
+
+        refute_same subject, copy
+        refute_same subject.bf, copy.bf
+        assert_equal 111, copy.size
+        assert_equal 5, copy.hashes
+        assert_equal payload, copy.to_msgpack
+        assert_includes copy, "foo"
+        assert_includes copy, "bar"
+        assert_includes copy, "\x00\xFF".b
+      end
+
+      it "isolates changes to the copy from the original" do
+        subject.add("foo")
+        bitmap = subject.bitmap
+        copy = subject.public_send(copy_method)
+
+        copy.clear
+        assert_empty copy
+        assert_equal bitmap, subject.bitmap
+
+        copy.add("bar")
+        assert_includes copy, "bar"
+        assert_equal bitmap, subject.bitmap
+      end
+
+      it "isolates changes to the original from the copy" do
+        subject.add("foo")
+        bitmap = subject.bitmap
+        copy = subject.public_send(copy_method)
+
+        subject.clear
+        subject.add("bar")
+        assert_equal bitmap, copy.bitmap
+        assert_includes copy, "foo"
+      end
+
+      it "independently copies an empty filter" do
+        copy = subject.public_send(copy_method)
+        assert_empty copy
+
+        copy.add("foo")
+        refute_empty copy
+        assert_empty subject
+      end
+
+      it "preserves subclasses and their instance variables" do
+        klass = Class.new(BloomFit) do
+          attr_reader :label
+
+          def initialize(label)
+            @label = label
+            super(size: 111, hashes: 5)
+          end
+        end
+        original = klass.new("label").add("foo")
+        copy = original.public_send(copy_method)
+
+        assert_instance_of klass, copy
+        assert_equal "label", copy.label
+        assert_equal original.to_msgpack, copy.to_msgpack
+        copy.clear
+        assert_includes original, "foo"
+      end
+    end
+  end
+
+  describe "copying frozen filters" do
+    it "preserves Ruby's dup and clone frozen-state behavior" do
+      subject.add("foo")
+      subject.freeze
+
+      copy = subject.dup
+      refute_predicate copy, :frozen?
+      assert_predicate subject.clone, :frozen?
+      refute_predicate subject.clone(freeze: false), :frozen?
+      copy.clear
+      assert_includes subject, "foo"
+    end
+  end
+
   describe "#empty?" do
     it "returns true when nothing set" do
       assert_equal true, subject.empty? # rubocop:disable Minitest/AssertTruthy

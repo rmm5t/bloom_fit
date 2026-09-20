@@ -274,4 +274,12 @@ class BloomFit
   def save(filename)
     File.binwrite(filename, to_msgpack)
   end
+
+  private
+
+  # Gives dup and clone their own native filter and bitmap.
+  def initialize_copy(other)
+    super
+    @bf = other.bf.dup
+  end
 end
