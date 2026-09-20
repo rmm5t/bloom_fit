@@ -360,6 +360,30 @@ class BloomFitTest < Minitest::Spec
       bf << "cool" << "cat"
       assert_equal "1001011001101001", bf.to_binary
     end
+
+    it "renders a populated one-bit filter" do
+      bf = BloomFit.new(size: 1, hashes: 1)
+      bf.add("key")
+      assert_equal "1", bf.to_binary
+    end
+
+    it "renders valid bits in the final partial byte and preserves serialized bytes" do
+      payload = MessagePack.pack([19, 4, "\x96\x69\x05\x00".b])
+      bf = BloomFit.unpack(payload)
+
+      assert_equal "1001011001101001101", bf.to_binary
+      assert_equal bf.set_bits, bf.to_binary.count("1")
+      assert_equal payload, bf.to_msgpack
+    end
+
+    it "includes every valid bit across byte boundaries" do
+      (1..24).each do |size|
+        bf = BloomFit.new(size:, hashes: 1)
+        bf.bf.load("\xFF".b * bf.bitmap.bytesize)
+
+        assert_equal "1" * size, bf.to_binary
+      end
+    end
   end
 
   describe "#merge" do
