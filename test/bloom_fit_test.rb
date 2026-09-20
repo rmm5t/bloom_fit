@@ -187,6 +187,16 @@ class BloomFitTest < Minitest::Spec
       assert_equal false, subject.empty? # rubocop:disable Minitest/RefuteFalse
       refute_empty subject
     end
+
+    it "checks restored filters while preserving their MessagePack bytes" do
+      [["\x00\x00\x00\x00".b, true], ["\x04\x14\x00\x00".b, false]].each do |bitmap, expected|
+        payload = MessagePack.pack([20, 4, bitmap])
+        filter = BloomFit.unpack(payload)
+
+        assert_equal expected, filter.empty?
+        assert_equal payload, filter.to_msgpack
+      end
+    end
   end
 
   describe "#add" do

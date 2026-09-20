@@ -217,6 +217,51 @@ class CBloomFilterTest < Minitest::Spec
     end
   end
 
+  describe "#empty?" do
+    it "returns true for a new filter" do
+      assert_equal true, subject.empty? # rubocop:disable Minitest/AssertTruthy
+    end
+
+    it "returns false after adding a key and true after clearing" do
+      subject.add("foo")
+      assert_equal false, subject.empty? # rubocop:disable Minitest/RefuteFalse
+
+      subject.clear
+      assert_empty subject
+    end
+
+    it "detects a set bit in the first byte" do
+      bf = CBloomFilter.new(20, 4)
+      bf.load("\x01\x00\x00\x00".b)
+      refute_empty bf
+    end
+
+    it "detects the last valid bit across byte boundaries without changing the bitmap" do
+      [1, 7, 8, 9, 16, 20, 1000].each do |size|
+        bf = CBloomFilter.new(size, 1)
+        bitmap = bf.bitmap
+        bitmap.setbyte((size - 1) / 8, 1 << ((size - 1) % 8))
+        bf.load(bitmap)
+
+        refute_empty bf
+        assert_equal bitmap, bf.bitmap
+      end
+    end
+
+    it "recognizes an empty bitmap loaded over a populated filter" do
+      bitmap = subject.bitmap
+      subject.add("foo")
+      subject.load(bitmap)
+      assert_empty subject
+    end
+
+    it "reports empty when only padding bits were present in the loaded bitmap" do
+      bf = CBloomFilter.new(20, 4)
+      bf.load("\x00\x00\xF0\xFF".b)
+      assert_empty bf
+    end
+  end
+
   describe "#set_bits" do
     it "initializes to zero" do
       assert_equal 0, subject.set_bits

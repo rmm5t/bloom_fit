@@ -221,6 +221,19 @@ static VALUE bf_k(VALUE self) {
     return INT2FIX(bf->k);
 }
 
+static VALUE bf_empty(VALUE self) {
+    struct BloomFilter *bf = bf_ptr(self);
+    int i;
+
+    for (i = 0; i < bf->bytes; i++) {
+        if (bf->ptr[i] != 0) {
+            return Qfalse;
+        }
+    }
+
+    return Qtrue;
+}
+
 static VALUE bf_set_bits(VALUE self){
     struct BloomFilter *bf = bf_ptr(self);
     int i, count = 0;
@@ -384,6 +397,7 @@ void Init_cbloomfilter(void) {
     rb_define_private_method(cBloomFilter, "initialize_copy", bf_initialize_copy, 1);
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
+    rb_define_method(cBloomFilter, "empty?", bf_empty, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);
     rb_define_method(cBloomFilter, "add", bf_add, 1);
     rb_define_method(cBloomFilter, "include?", bf_include, 1);

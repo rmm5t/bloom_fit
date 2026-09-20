@@ -91,7 +91,14 @@ class BloomFit
   #
   # Returns the number of bits currently set to +1+.
 
-  def_delegators :@bf, :m, :k, :bitmap, :include?, :set_bits
+  # :method: empty?
+  #
+  # Returns +true+ when no bits are set.
+  #
+  # This is an exact check on the filter state, unlike +include?+, which is
+  # probabilistic for positive matches. It stops at the first nonzero byte.
+
+  def_delegators :@bf, :m, :k, :bitmap, :include?, :set_bits, :empty?
 
   # Returns the configured filter width.
   alias size m
@@ -100,14 +107,6 @@ class BloomFit
   alias key? include?
   alias [] include?
   alias n set_bits
-
-  # Returns +true+ when no bits are set.
-  #
-  # This is an exact check on the filter state, unlike +include?+, which is
-  # probabilistic for positive matches.
-  def empty?
-    set_bits.zero?
-  end
 
   # Adds +key+ to the filter and returns +self+.
   #
