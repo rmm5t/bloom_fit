@@ -79,6 +79,34 @@ static VALUE bf_alloc(VALUE klass) {
     return obj;
 }
 
+static VALUE bf_initialize_copy(VALUE self, VALUE other) {
+    struct BloomFilter *bf, *source;
+    unsigned char *bitmap = NULL;
+
+    if (self == other) {
+        return self;
+    }
+
+    rb_obj_init_copy(self, other);
+    bf = bf_ptr(self);
+    source = bf_ptr(other);
+
+    /* Allocate first so a failed allocation leaves the receiver intact. */
+    if (source->ptr != NULL) {
+        bitmap = ALLOC_N(unsigned char, source->bytes);
+        memcpy(bitmap, source->ptr, source->bytes);
+    }
+
+    ruby_xfree(bf->ptr);
+    bf->m = source->m;
+    bf->k = source->k;
+    bf->bytes = source->bytes;
+    bf->ptr = bitmap;
+
+    RB_GC_GUARD(other);
+    return self;
+}
+
 static void bucket_set(struct BloomFilter *bf, int index) {
     int byte_offset = index / 8;
     int bit_offset = index % 8;
@@ -353,6 +381,7 @@ void Init_cbloomfilter(void) {
     cBloomFilter = rb_define_class("CBloomFilter", rb_cObject);
     rb_define_alloc_func(cBloomFilter, bf_alloc);
     rb_define_method(cBloomFilter, "initialize", bf_initialize, -1);
+    rb_define_private_method(cBloomFilter, "initialize_copy", bf_initialize_copy, 1);
     rb_define_method(cBloomFilter, "m", bf_m, 0);
     rb_define_method(cBloomFilter, "k", bf_k, 0);
     rb_define_method(cBloomFilter, "set_bits", bf_set_bits, 0);

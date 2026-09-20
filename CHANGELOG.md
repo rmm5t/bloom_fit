@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 - Fix automatic hash-count calculation to use floating-point division and at least one hash
 - Validate integer dimensions and finite probabilities, and reject native numeric overflow before narrowing values
 - Preserve full Ruby string lengths when hashing keys in the C extension
+- Fix `dup` and `clone` to copy the native bitmap independently for both `BloomFit` and `CBloomFilter`
 
 ## [1.2.0] - 2026-04-16
 
