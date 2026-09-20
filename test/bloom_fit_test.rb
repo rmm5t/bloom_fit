@@ -23,6 +23,69 @@ class BloomFitTest < Minitest::Spec
       assert_equal 191_702, bf.size
       assert_equal 14, bf.hashes
     end
+
+    it "uses the fractional bits per element when calculating hashes" do
+      bf = BloomFit.new(capacity: 100, false_positive_rate: 0.1)
+      assert_equal 480, bf.size
+      assert_equal 4, bf.hashes
+    end
+
+    it "uses at least one hash for probabilities near one" do
+      bf = BloomFit.new(capacity: 100, false_positive_rate: 0.9)
+      assert_equal 22, bf.size
+      assert_equal 1, bf.hashes
+      bf.add("key")
+      assert_includes bf, "key"
+
+      bf = BloomFit.new(capacity: 100, false_positive_rate: 1.0.prev_float)
+      assert_equal 1, bf.size
+      assert_equal 1, bf.hashes
+    end
+
+    it "supports small positive probabilities within the native hash limit" do
+      bf = BloomFit.new(capacity: 1, false_positive_rate: 1e-70)
+      assert_equal 336, bf.size
+      assert_equal 233, bf.hashes
+    end
+
+    it "rejects probabilities requiring more hashes than the native limit" do
+      assert_raises(ArgumentError) { BloomFit.new(capacity: 1, false_positive_rate: Float::MIN) }
+    end
+
+    it "requires a positive integer capacity" do
+      [0, -1, 1.5, 100.0, Float::NAN, Float::INFINITY, nil, "100"].each do |capacity|
+        assert_raises(ArgumentError) { BloomFit.new(capacity:) }
+      end
+    end
+
+    it "rejects capacities whose calculated bit length is too large" do
+      [1 << 32, 1 << 100, 1 << 1024].each do |capacity|
+        assert_raises(RangeError) { BloomFit.new(capacity:) }
+      end
+    end
+
+    it "requires a finite real probability strictly between zero and one" do
+      [0, 1, -0.1, 1.1, Float::NAN, Float::INFINITY, -Float::INFINITY, nil, "0.1", Complex(0.1, 1)].each do |rate|
+        assert_raises(ArgumentError) { BloomFit.new(false_positive_rate: rate) }
+      end
+    end
+
+    it "accepts a rational probability" do
+      bf = BloomFit.new(capacity: 100, false_positive_rate: Rational(1, 10))
+      assert_equal 480, bf.size
+      assert_equal 4, bf.hashes
+    end
+
+    it "rejects probabilities that round to zero or one as floats" do
+      [Rational(1, 10**400), Rational((10**400) - 1, 10**400)].each do |rate|
+        assert_raises(ArgumentError) { BloomFit.new(false_positive_rate: rate) }
+      end
+    end
+
+    it "requires integer manual dimensions" do
+      assert_raises(TypeError) { BloomFit.new(size: 100.5, hashes: 4) }
+      assert_raises(TypeError) { BloomFit.new(size: 100, hashes: 4.5) }
+    end
   end
 
   describe "#empty?" do

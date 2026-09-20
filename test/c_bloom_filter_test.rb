@@ -29,6 +29,22 @@ class CBloomFilterTest < Minitest::Spec
       error = assert_raises(RangeError) { CBloomFilter.new((1 << 31) - 7) }
       assert_equal "bit length is too large", error.message
     end
+
+    it "rejects negative values that would wrap to a positive int" do
+      assert_raises(ArgumentError, RangeError) { CBloomFilter.new(-(1 << 32) + 16) }
+    end
+
+    it "rejects integers outside the native long range" do
+      [1 << 100, -(1 << 100)].each do |size|
+        assert_raises(RangeError) { CBloomFilter.new(size) }
+      end
+    end
+
+    it "requires an integer bit length" do
+      [16.5, 16.0, Float::NAN, Float::INFINITY, Rational(33, 2), nil, "16"].each do |size|
+        assert_raises(TypeError) { CBloomFilter.new(size) }
+      end
+    end
   end
 
   describe "#k" do
@@ -49,6 +65,33 @@ class CBloomFilterTest < Minitest::Spec
     it "rejects values larger than the salt table" do
       error = assert_raises(ArgumentError) { CBloomFilter.new(10_000, 257) }
       assert_equal "hash length must be <= 256", error.message
+    end
+
+    it "accepts the full salt table" do
+      bf = CBloomFilter.new(1000, 256)
+      assert_equal 256, bf.k
+      bf.add("key")
+      assert_includes bf, "key"
+    end
+
+    it "rejects negative values that would wrap to a positive int" do
+      assert_raises(ArgumentError, RangeError) { CBloomFilter.new(1000, -(1 << 32) + 4) }
+    end
+
+    it "rejects values larger than the native int range" do
+      assert_raises(RangeError) { CBloomFilter.new(1000, 1 << 31) }
+    end
+
+    it "rejects integers outside the native long range" do
+      [1 << 100, -(1 << 100)].each do |hashes|
+        assert_raises(RangeError) { CBloomFilter.new(1000, hashes) }
+      end
+    end
+
+    it "requires an integer hash count" do
+      [4.5, 4.0, Float::NAN, Float::INFINITY, Rational(9, 2), nil, "4"].each do |hashes|
+        assert_raises(TypeError) { CBloomFilter.new(1000, hashes) }
+      end
     end
   end
 
