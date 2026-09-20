@@ -91,7 +91,14 @@ class BloomFit
   #
   # Returns the number of bits currently set to +1+.
 
-  def_delegators :@bf, :m, :k, :bitmap, :include?, :set_bits
+  # :method: empty?
+  #
+  # Returns +true+ when no bits are set.
+  #
+  # This is an exact check on the filter state, unlike +include?+, which is
+  # probabilistic for positive matches. It stops at the first nonzero byte.
+
+  def_delegators :@bf, :m, :k, :bitmap, :include?, :set_bits, :empty?
 
   # Returns the configured filter width.
   alias size m
@@ -100,14 +107,6 @@ class BloomFit
   alias key? include?
   alias [] include?
   alias n set_bits
-
-  # Returns +true+ when no bits are set.
-  #
-  # This is an exact check on the filter state, unlike +include?+, which is
-  # probabilistic for positive matches.
-  def empty?
-    set_bits.zero?
-  end
 
   # Adds +key+ to the filter and returns +self+.
   #
@@ -216,9 +215,10 @@ class BloomFit
   # bits (+n+), the hash count (+k+), and the predicted false-positive rate
   # based on the current fill level.
   def stats
-    fpr = ((n.to_f / m)**k) * 100
+    count = n
+    fpr = ((count.to_f / m)**k) * 100
 
-    format <<~STATS, m, n, k, fpr
+    format <<~STATS, m, count, k, fpr
       Number of filter buckets (m):  %d
       Number of set bits (n):        %d
       Number of filter hashes (k):   %d
