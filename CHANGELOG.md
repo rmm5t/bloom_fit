@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com//), and thi
 - Preserve full Ruby string lengths when hashing keys in the C extension
 - Fix `dup` and `clone` to copy the native bitmap independently for both `BloomFit` and `CBloomFilter`
 - Speed up `empty?` with a native bitmap scan that stops at the first nonzero byte
+- Avoid scanning the bitmap twice when calculating `stats`
 
 ## [1.2.0] - 2026-04-16
 
