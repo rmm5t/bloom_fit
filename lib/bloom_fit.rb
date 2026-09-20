@@ -44,16 +44,22 @@ class BloomFit
   # many false positives you can tolerate.
   #
   # @param capacity [Integer] expected number of elements to store in the set
-  # @param false_positive_rate [Integer] expected number of elements to store in the set
+  # @param false_positive_rate [Float] target probability, strictly between 0 and 1
   # @param size [Integer] number of buckets in a bloom filter
   # @param hashes [Integer] number of hash functions
   def initialize(capacity: 100, false_positive_rate: 0.001, size: nil, hashes: 4)
     if size.nil? || hashes.nil?
-      raise ArgumentError, "capacity must be > 0" unless capacity.positive?
-      raise ArgumentError, "false_positive_rate must be between 0 and 1" if false_positive_rate <= 0.0 || false_positive_rate >= 1.0
+      raise ArgumentError, "capacity must be a positive Integer" unless capacity.is_a?(Integer) && capacity.positive?
+      raise RangeError, "capacity is too large" if capacity > Float::MAX
 
-      size = (-capacity.to_f * Math.log(false_positive_rate) / (LN2**2)).ceil
-      hashes = (size / capacity * LN2).ceil
+      rate = false_positive_rate.to_f if false_positive_rate.is_a?(Numeric) && false_positive_rate.real?
+      raise ArgumentError, "false_positive_rate must be a finite number between 0 and 1" unless rate&.positive? && rate < 1.0
+
+      size = -capacity.to_f * Math.log(rate) / (LN2**2)
+      raise RangeError, "bit length is too large" unless size.finite?
+
+      size = size.ceil
+      hashes = [(size.fdiv(capacity) * LN2).ceil, 1].max
     end
 
     @bf = CBloomFilter.new(size, hashes)

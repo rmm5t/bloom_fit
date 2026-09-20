@@ -24,9 +24,9 @@ struct BloomFilter {
     int bytes; /* size of byte data */
 };
 
-unsigned long djb2(const char *str, int len) {
+unsigned long djb2(const char *str, long len) {
     unsigned long hash = 5381;
-    for (int i = 0; i < len; i++) {
+    for (long i = 0; i < len; i++) {
         hash = ((hash << 5) + hash) + (unsigned char) str[i];
     }
     return hash;
@@ -139,23 +139,27 @@ static VALUE bf_initialize(int argc, VALUE *argv, VALUE self) {
       break;
     }
 
+    if (!RB_INTEGER_TYPE_P(arg1))
+        rb_raise(rb_eTypeError, "bit length must be an Integer");
+    if (!RB_INTEGER_TYPE_P(arg2))
+        rb_raise(rb_eTypeError, "hash length must be an Integer");
+
     m_value = NUM2LONG(arg1);
     k_value = NUM2LONG(arg2);
 
+    if (m_value < 1)
+        rb_raise(rb_eArgError, "bit length must be >= 1");
     if (m_value > INT_MAX - 15)
         rb_raise(rb_eRangeError, "bit length is too large");
+    if (k_value < 1)
+        rb_raise(rb_eArgError, "hash length must be >= 1");
     if (k_value > INT_MAX)
         rb_raise(rb_eRangeError, "hash length is too large");
+    if (k_value > salts_length)
+        rb_raise(rb_eArgError, "hash length must be <= %d", salts_length);
 
     m = (int) m_value;
     k = (int) k_value;
-
-    if (m < 1)
-        rb_raise(rb_eArgError, "bit length must be >= 1");
-    if (k < 1)
-        rb_raise(rb_eArgError, "hash length must be >= 1");
-    if (k > salts_length)
-        rb_raise(rb_eArgError, "hash length must be <= %d", salts_length);
 
     bf->m = m;
     bf->k = k;
@@ -210,13 +214,14 @@ static VALUE bf_add(VALUE self, VALUE key) {
     VALUE skey;
     unsigned long hash;
     int index;
-    int i, len, m, k;
+    int i, m, k;
+    long len;
     char *ckey;
     struct BloomFilter *bf = bf_ptr(self);
 
     skey = rb_obj_as_string(key);
     ckey = StringValuePtr(skey);
-    len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
+    len = RSTRING_LEN(skey); /* length of the string in bytes */
 
     m = bf->m;
     k = bf->k;
@@ -291,13 +296,14 @@ static VALUE bf_include(VALUE self, VALUE key) {
     VALUE skey;
     unsigned long hash;
     int index;
-    int i, len, m, k;
+    int i, m, k;
+    long len;
     char *ckey;
     struct BloomFilter *bf = bf_ptr(self);
 
     skey = rb_obj_as_string(key);
     ckey = StringValuePtr(skey);
-    len = (int) (RSTRING_LEN(skey)); /* length of the string in bytes */
+    len = RSTRING_LEN(skey); /* length of the string in bytes */
 
     m = bf->m;
     k = bf->k;
